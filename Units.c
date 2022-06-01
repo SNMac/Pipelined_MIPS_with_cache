@@ -967,7 +967,7 @@ uint32_t ALU(uint32_t input1, uint32_t input2, char ALUSig) {
 
     }
     if ( ((input1 & 0x80000000) == (input2 & 0x80000000)) && ((ALUresult & 0x80000000) != (input1 & 0x80000000)) ) {
-        // same sign input = different sign output
+        // same sign input, different sign output
         ALUctrlSig.ArthOvfl = 1;
     }
     return ALUresult;

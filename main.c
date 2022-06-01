@@ -27,8 +27,9 @@ extern IFID ifid[2];
 extern IDEX idex[2];
 extern EXMEM exmem[2];
 extern MEMWB memwb[2];
-extern BRANCH_PREDICT BranchPred;
 extern HAZARD_DETECTION_SIGNAL hzrddetectSig;
+extern BRANCH_PREDICT BranchPred;
+extern CACHE Cache[8];
 
 // from Debug.c
 extern DEBUGID debugid[2];
@@ -63,6 +64,115 @@ int main(int argc, char* argv[]) {
         }
         CacheSet = CacheSetSelect();
         CacheSize = CacheSizeSelect();
+
+        switch (CacheSize) {
+            case '1' :  // 64 bytes
+                if (CacheSet == '1') {  // Direct-mapped
+                    Cache[0].Cache = (uint32_t **)malloc(sizeof(uint32_t *) * (64 / CACHELINESIZE));
+                    Cache[0].Cache[0] = (uint32_t *)malloc(sizeof(uint32_t) * 3 * (64 / CACHELINESIZE));
+                    for (int i = 1; i < (64 / CACHELINESIZE); i++) {
+                        Cache[0].Cache[i] = Cache[0].Cache[i - 1] + 3;
+                    }
+                } else if (CacheSet == '2') {  // 2-way
+                    for (int way = 0; way < 2; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (64 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (64 / CACHELINESIZE));
+                        for (int i = 1; i < (64 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                } else if (CacheSet == '2') {  // 4-way
+                    for (int way = 0; way < 4; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (64 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (64 / CACHELINESIZE));
+                        for (int i = 1; i < (64 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                } else {  // 8-way
+                    for (int way = 0; way < 8; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (64 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (64 / CACHELINESIZE));
+                        for (int i = 1; i < (64 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                }
+                break;
+
+            case '2' :  // 128 bytes
+                if (CacheSet == '1') {  // Direct-mapped
+                    Cache[0].Cache = (uint32_t**)malloc(sizeof(uint32_t*) * (128 / CACHELINESIZE));
+                    Cache[0].Cache[0] = (uint32_t*)malloc(sizeof(uint32_t) * 3 * (128 / CACHELINESIZE));
+                    for (int i = 1; i < (128 / CACHELINESIZE); i++) {
+                        Cache[0].Cache[i] = Cache[0].Cache[i - 1] + 3;
+                    }
+                } else if (CacheSet == '2') {  // 2-way
+                    for (int way = 0; way < 2; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (128 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (128 / CACHELINESIZE));
+                        for (int i = 1; i < (128 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                } else if (CacheSet == '2') {  // 4-way
+                    for (int way = 0; way < 4; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (128 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (128 / CACHELINESIZE));
+                        for (int i = 1; i < (128 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                } else {  // 8-way
+                    for (int way = 0; way < 8; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (128 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (128 / CACHELINESIZE));
+                        for (int i = 1; i < (128 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                }
+                break;
+
+            case '3' :  // 256 bytes
+                if (CacheSet == '1') {  // Direct-mapped
+                    Cache[0].Cache = (uint32_t**)malloc(sizeof(uint32_t*) * (256 / CACHELINESIZE));
+                    Cache[0].Cache[0] = (uint32_t*)malloc(sizeof(uint32_t) * 3 * (256 / CACHELINESIZE));
+                    for (int i = 1; i < (256 / CACHELINESIZE); i++) {
+                        Cache[0].Cache[i] = Cache[0].Cache[i - 1] + 3;
+                    }
+                } else if (CacheSet == '2') {  // 2-way
+                    for (int way = 0; way < 2; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (256 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (256 / CACHELINESIZE));
+                        for (int i = 1; i < (256 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                } else if (CacheSet == '2') {  // 4-way
+                    for (int way = 0; way < 4; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (256 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (256 / CACHELINESIZE));
+                        for (int i = 1; i < (256 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                } else {  // 8-way
+                    for (int way = 0; way < 8; way++) {
+                        Cache[way].Cache = (uint32_t **) malloc(sizeof(uint32_t *) * (256 / CACHELINESIZE));
+                        Cache[way].Cache[0] = (uint32_t *) malloc(sizeof(uint32_t) * 3 * (256 / CACHELINESIZE));
+                        for (int i = 1; i < (256 / CACHELINESIZE); i++) {
+                            Cache[way].Cache[i] = Cache[way].Cache[i - 1] + 3;
+                        }
+                    }
+                }
+                break;
+
+            default :
+                fprintf(stderr, "ERROR: main) char CacheSize is wrong.\n");
+                exit(EXIT_FAILURE);
+        }
+        memset(&Cache, 0, sizeof(CACHE));
 
         clock_t start = clock();
 
@@ -118,7 +228,7 @@ int main(int argc, char* argv[]) {
                 break;
 
             default :
-                fprintf(stderr, "ERROR: main) char PredictorSelector is wrong.\n");
+                fprintf(stderr, "ERROR: main) char Predictor is wrong.\n");
                 exit(EXIT_FAILURE);
         }
 
@@ -126,6 +236,34 @@ int main(int argc, char* argv[]) {
         printFinalresult(&Predictor, &PredictionBit, filename, &Counter);
         fclose(fp);
         free(filename);
+        switch (CacheSet) {
+            case '1' :  // Direct-mapped
+                free(Cache[0].Cache[0]);
+                free(Cache[0].Cache);
+                break;
+
+            case '2' :  // 2-way
+                for (int way = 0; way < 2; way++) {
+                    free(Cache[way].Cache[0]);
+                    free(Cache[way].Cache);
+                }
+                break;
+
+            case '3' :  // 4-way
+                for (int way = 0; way < 4; way++) {
+                    free(Cache[way].Cache[0]);
+                    free(Cache[way].Cache);
+                }
+                break;
+
+            case '4' :  // 8-way
+                for (int way = 0; way < 8; way++) {
+                    free(Cache[way].Cache[0]);
+                    free(Cache[way].Cache);
+                }
+                break;
+        }
+
         clock_t end = clock();
         printf("Execution time : %lf\n", (double)(end - start) / CLOCKS_PER_SEC);
 

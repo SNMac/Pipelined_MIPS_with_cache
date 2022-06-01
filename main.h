@@ -43,7 +43,6 @@ void LocalPipelineHandsOver(void);
 void AlwaysTakenPipelineHandsOver(void);
 void BTFNTPipelineHandsOver(void);
 
-void printFinalresult(const char* Predictor, const char* Predictbit,
-                      const char* filename, const char* Counter);
+void printFinalresult(const char* Predictor, const char* Predictbit, const char* filename, const char* Counter);
 
 #endif //CAMP_PROJECT3_MAIN_H

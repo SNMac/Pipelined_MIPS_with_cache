@@ -121,7 +121,7 @@ typedef struct _BRANCH_PREDICT {  // Branch prediction unit
 
 /* Cache unit */
 typedef struct _CACHE {
-    uint32_t Cache[][3];
+    uint32_t** Cache;
 }CACHE;
 
 /* Data units */
