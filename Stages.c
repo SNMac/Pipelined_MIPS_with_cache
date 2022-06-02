@@ -26,11 +26,12 @@ extern EXMEM exmem[2];
 extern MEMWB memwb[2];
 extern CONTROL_SIGNAL ctrlSig;
 extern ALU_CONTROL_SIGNAL ALUctrlSig;
-extern BRANCH_PREDICT BranchPred;
 extern FORWARD_SIGNAL fwrdSig;
 extern ID_FORWARD_SIGNAL idfwrdSig;
 extern MEM_FORWARD_SIGNAL memfwrdSig;
 extern HAZARD_DETECTION_SIGNAL hzrddetectSig;
+extern BRANCH_PREDICT BranchPred;
+extern CACHE Cache[4];
 
 // from Debug.c
 extern DEBUGIF debugif;
@@ -833,13 +834,8 @@ void MEM(const int* Cacheset, const int* Cachesize) {
     uint32_t MemWriteDataMUX = MUX(exmem[1].ForwardBMUX, MemtoRegMUX, memfwrdSig.MEMForward);
 
     // Cache access
-    CheckCache(exmem[1].ALUresult);
-
-    // Memory access
-    // TODO
-    //  add if to memory access
-    counting.cycle += 999;
-    uint32_t Readdata = DataMem(exmem[1].ALUresult, MemWriteDataMUX,exmem[1].MemRead, exmem[1].MemWrite);
+    uint32_t Readdata = AccessCache(exmem[1].ALUresult, MemWriteDataMUX, Cacheset, Cachesize,
+                                   exmem[1].MemRead, exmem[1].MemWrite);
 
     // Save data to pipeline
     memwb[0].PCadd8 = exmem[1].PCadd8; memwb[0].ALUresult = exmem[1].ALUresult;

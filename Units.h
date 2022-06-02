@@ -122,9 +122,12 @@ typedef struct _BRANCH_PREDICT {  // Branch prediction unit
 /* Cache unit */
 typedef struct _CACHE {
     uint32_t*** Cache;
+    // [i][0][0] = valid bit, [i][1][0] = tag bits,
+    // [i][2][0 ~ 63] = data, [i][3][0] = dirty bit (for Write-back policy)
     uint32_t tag;
     uint8_t index;
     uint8_t offset;
+    uint8_t way;
 }CACHE;
 
 /* Data units */
@@ -166,7 +169,9 @@ void BTFNTUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr);  
 void BTFNTBranchBufferWrite(uint32_t WritePC, uint32_t Address);  // Write BranchAddr to BTB
 
 /* Cache memory */
-bool CheckCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);
+uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, const int* Cachesize,
+                     bool MemRead, bool MemWrite);  // Accessing cache
+void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);  // Updating cache
 
 uint32_t ALU(uint32_t input1, uint32_t input2, char ALUSig);  // ALU
 uint32_t MUX(uint32_t input1, uint32_t input2, bool signal);  // signal == 0) input1, 1) input2

@@ -29,7 +29,7 @@ extern EXMEM exmem[2];
 extern MEMWB memwb[2];
 extern HAZARD_DETECTION_SIGNAL hzrddetectSig;
 extern BRANCH_PREDICT BranchPred;
-extern CACHE Cache[8];
+extern CACHE Cache[4];
 
 // from Debug.c
 extern DEBUGID debugid[2];
@@ -62,8 +62,8 @@ int main(int argc, char* argv[]) {
                 Counter = CounterSelect();
             }
         }
-        CacheSet = CacheSetSelect();
         CacheSize = CacheSizeSelect();
+        CacheSet = CacheSetSelect();
         CacheSetting(&CacheSet, &CacheSize);
 
         clock_t start = clock();
@@ -286,34 +286,6 @@ char CounterSelect(void) {
     }
 }
 
-// Cache set-associativity select
-int CacheSetSelect(void) {
-    int retVal;
-    printf("\n");
-    printf("#######################################\n");
-    printf("1 : Direct-mapped, 2 : 2-way, 3 : 4-way\n");
-    printf("#######################################\n");
-    while (1) {
-        printf("\n");
-        printf("Select cache set-associativity : ");
-        scanf(" %d", &retVal);
-        getchar();
-        switch (retVal) {
-            case 1 :
-                return 1;
-
-            case 2 :
-                return 2;
-
-            case 3 :
-                return 4;
-
-            default :
-                printf("User inputted wrong number. Please try again.\n");
-        }
-    }
-}
-
 // Cache size select
 int CacheSizeSelect(void) {
     int retVal;
@@ -342,13 +314,43 @@ int CacheSizeSelect(void) {
     }
 }
 
+// Cache set-associativity select
+int CacheSetSelect(void) {
+    int retVal;
+    printf("\n");
+    printf("#######################################\n");
+    printf("1 : Direct-mapped, 2 : 2-way, 3 : 4-way\n");
+    printf("#######################################\n");
+    while (1) {
+        printf("\n");
+        printf("Select cache set-associativity : ");
+        scanf(" %d", &retVal);
+        getchar();
+        switch (retVal) {
+            case 1 :  // Direct-mapped
+                return 1;
+
+            case 2 :  // 2-way
+                return 2;
+
+            case 3 :  // 4-way
+                return 4;
+
+            default :
+                printf("User inputted wrong number. Please try again.\n");
+        }
+    }
+}
+
 // Cache setting
 void CacheSetting(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
         Cache[way].Cache = (uint32_t***)malloc(sizeof(uint32_t**) * (*Cachesize / CACHELINESIZE));
         for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
-            Cache[way].Cache[i] = (uint32_t**)malloc(sizeof(uint32_t*) * 3);
-            Cache[way].Cache[i][2] = (uint32_t*)malloc(sizeof(uint32_t) * 64);
+            Cache[way].Cache[i] = (uint32_t**)malloc(sizeof(uint32_t*) * 4);
+            for (int j = 0; j < 4; j++) {
+                Cache[way].Cache[i][j] = (uint32_t*)malloc(sizeof(uint32_t) * 64);
+            }
         }
     }
 }
@@ -357,7 +359,9 @@ void CacheSetting(const int* Cacheset, const int* Cachesize) {
 void FreeCache(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
         for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
-            free(Cache[way].Cache[i][2]);
+            for (int j = 0; j < 4; j++) {
+                free(Cache[way].Cache[i][j]);
+            }
             free(Cache[way].Cache[i]);
         }
         free(Cache[way].Cache);
@@ -809,8 +813,8 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
 
     // Calculate cache HIT rate
     double CacheHITrate = 0;
-    if ((counting.cacheHITcount + counting.cacheMISScount) != 0) {
-        CacheHITrate = (double)counting.cacheHITcount / (double)(counting.cacheHITcount + counting.cacheMISScount) * 100;
+    if ((counting.cacheHITcount + counting.coldMISScount + counting.conflictMISScount) != 0) {
+        CacheHITrate = (double)counting.cacheHITcount / (double)(counting.cacheHITcount + counting.coldMISScount + counting.conflictMISScount) * 100;
     }
 
     // Print summary
@@ -875,7 +879,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
     printf("# of stalling : %d\n", counting.stall);
     printf("# of memory operation instructions : %d\n", counting.Memcount);
     printf("# of cache HIT : %d\n", counting.cacheHITcount);
-    printf("# of cache MISS : %d\n", counting.cacheMISScount);
+    printf("# of cache MISS : %d\n", counting.coldMISScount + counting.conflictMISScount);
     printf("HIT rate of cache access : %.2lf %%\n", CacheHITrate);
     return;
 }

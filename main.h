@@ -15,7 +15,6 @@ typedef struct _COUNTING {
     int cacheHITcount;
     int coldMISScount;
     int conflictMISScount;
-    int cacheMISScount;
     int stall;
 }COUNTING;
 
@@ -24,8 +23,8 @@ void ReadDirectory(char** files, char** directory);
 char PredSelect(void);
 int PBSelect(void);
 char CounterSelect(void);
-int CacheSetSelect(void);
 int CacheSizeSelect(void);
+int CacheSetSelect(void);
 void CacheSetting(const int* Cacheset, const int* Cachesize);
 void FreeCache(const int* Cacheset, const int* Cachesize);
 
