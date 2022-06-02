@@ -1,9 +1,9 @@
 //
-// Created by SNMac on 2022/05/09.
+// Created by SNMac on 2022/06/01.
 //
 
-#ifndef CAMP_PROJECT3_MAIN_H
-#define CAMP_PROJECT3_MAIN_H
+#ifndef CAMP_PROJECT4_MAIN_H
+#define CAMP_PROJECT4_MAIN_H
 
 typedef struct _COUNTING {
     int cycle;  // Clock cycle count
@@ -22,19 +22,21 @@ typedef struct _COUNTING {
 void FileSelect(char** name);
 void ReadDirectory(char** files, char** directory);
 char PredSelect(void);
-char PBSelect(void);
+int PBSelect(void);
 char CounterSelect(void);
-char CacheSetSelect(void);
-char CacheSizeSelect(void);
+int CacheSetSelect(void);
+int CacheSizeSelect(void);
+void CacheSetting(const int* Cacheset, const int* Cachesize);
+void FreeCache(const int* Cacheset, const int* Cachesize);
 
-void OnelevelPredict(const char* Predictbit, const char* Counter, const char* Cacheset, const char* Cachesize);
-void GsharePredict(const char* Predictbit, const char* Counter, const char* Cacheset, const char* Cachesize);
-void LocalPredict(const char* Predictbit, const char* Counter, const char* Cacheset, const char* Cachesize);
-void AlwaysTaken(const char* Cacheset, const char* Cachesize);
-void AlwaysnotTaken(const char* Cacheset, const char* Cachesize);
-void BTFNT(const char* Cacheset, const char* Cachesize);
+void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cacheset, const int* Cachesize);
+void GsharePredict(const int* Predictbit, const char* Counter, const int* Cacheset, const int* Cachesize);
+void LocalPredict(const int* Predictbit, const char* Counter, const int* Cacheset, const int* Cachesize);
+void AlwaysTaken(const int* Cacheset, const int* Cachesize);
+void AlwaysnotTaken(const int* Cacheset, const int* Cachesize);
+void BTFNT(const int* Cacheset, const int* Cachesize);
 
-void Firstinit(const char* Predictbit);
+void Firstinit(const int* Predictbit);
 void printnextPC(void);
 
 void OnelevelPipelineHandsOver(void);
@@ -43,6 +45,6 @@ void LocalPipelineHandsOver(void);
 void AlwaysTakenPipelineHandsOver(void);
 void BTFNTPipelineHandsOver(void);
 
-void printFinalresult(const char* Predictor, const char* Predictbit, const char* filename, const char* Counter);
+void printFinalresult(const char* Predictor, const int* Predictbit, const char* filename, const char* Counter);
 
-#endif //CAMP_PROJECT3_MAIN_H
+#endif //CAMP_PROJECT4_MAIN_H

@@ -1,9 +1,9 @@
 //
-// Created by SNMac on 2022/05/13.
+// Created by SNMac on 2022/06/01.
 //
 
-#ifndef CAMP_PROJECT3_DEBUG_H
-#define CAMP_PROJECT3_DEBUG_H
+#ifndef CAMP_PROJECT4_DEBUG_H
+#define CAMP_PROJECT4_DEBUG_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -62,16 +62,16 @@ typedef struct _DEBUGWB {
 }DEBUGWB;
 
 void printIF(int Predictor);
-void printID(int Predictor, const char* Predictbit, const char* Counter);
+void printID(int Predictor, const int* Predictbit, const char* Counter);
 void printEX(void);
-void printMEM(const char* Cacheset, const char* Cachesize);
+void printMEM(const int* Cacheset, const int* Cachesize);
 void printWB(void);
 void printRformat(void);
 void printIDforward(void);
 void printEXforward(void);
-void printUpdateBTB(const int* Predictor, const char* Predictbit, const char* Counter);
-void printPBtaken(const int* Predictor, const char* Predictbit, const char* Counter);
-void printPBnottaken(const int* Predictor, const char* Predictbit, const char* Counter);
+void printUpdateBTB(const int* Predictor, const int* Predictbit, const char* Counter);
+void printPBtaken(const int* Predictor, const int* Predictbit, const char* Counter);
+void printPBnottaken(const int* Predictor, const int* Predictbit, const char* Counter);
 void DebugPipelineHandsOver(void);
 
-#endif //CAMP_PROJECT3_DEBUG_H
+#endif //CAMP_PROJECT4_DEBUG_H

@@ -1,9 +1,9 @@
 //
-// Created by SNMac on 2022/05/13.
+// Created by SNMac on 2022/06/01.
 //
 
-#ifndef CAMP_PROJECT3_UNITS_H
-#define CAMP_PROJECT3_UNITS_H
+#ifndef CAMP_PROJECT4_UNITS_H
+#define CAMP_PROJECT4_UNITS_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -121,7 +121,10 @@ typedef struct _BRANCH_PREDICT {  // Branch prediction unit
 
 /* Cache unit */
 typedef struct _CACHE {
-    uint32_t** Cache;
+    uint32_t*** Cache;
+    uint32_t tag;
+    uint8_t index;
+    uint8_t offset;
 }CACHE;
 
 /* Data units */
@@ -133,24 +136,24 @@ uint32_t DataMem(uint32_t Addr, uint32_t Writedata, bool MemRead, bool MemWrite)
 
 /* Branch Predictor */
 // [One-level branch predictor]
-void CheckBranch(uint32_t PCvalue, const char* Predictbit);  // Check branch in IF stage
-void UpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const char* Predictbit, const char* Counter);  // Update BTB
-void BranchBufferWrite(uint32_t WritePC, uint32_t Address, const char* Predictbit);  // Write BranchAddr to BTB
-void PBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter);  // Update Prediction bit to taken
-void PBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter);  // Update Prediction bit to not taken
+void CheckBranch(uint32_t PCvalue, const int* Predictbit);  // Check branch in IF stage
+void UpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const int* Predictbit, const char* Counter);  // Update BTB
+void BranchBufferWrite(uint32_t WritePC, uint32_t Address, const int* Predictbit);  // Write BranchAddr to BTB
+void PBtaken(uint8_t Predbit, const int* Predictbit, const char* Counter);  // Update Prediction bit to taken
+void PBnottaken(uint8_t Predbit, const int* Predictbit, const char* Counter);  // Update Prediction bit to not taken
 // [Gshare branch predictor]
-void GshareCheckBranch(uint32_t PCvalue, const char* Predictbit);  // Check branch in IF stage
-void GshareUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const char* Predictbit, const char* Counter);  // Update BTB
+void GshareCheckBranch(uint32_t PCvalue, const int* Predictbit);  // Check branch in IF stage
+void GshareUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const int* Predictbit, const char* Counter);  // Update BTB
 void GshareBranchBufferWrite(uint32_t WritePC, uint32_t Address);  // Write BranchAddr to BTB
-void GsharePBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter);  // Update Prediction bit to taken
-void GsharePBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter);  // Update Prediction bit to not taken
+void GsharePBtaken(uint8_t Predbit, const int* Predictbit, const char* Counter);  // Update Prediction bit to taken
+void GsharePBnottaken(uint8_t Predbit, const int* Predictbit, const char* Counter);  // Update Prediction bit to not taken
 // [Local branch predictor]
 bool LocalCheckLHR(uint32_t PCvalue);
-void LocalCheckBranch(uint32_t PCvalue, const char* Predictbit);  // Check branch in IF stage
-void LocalUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const char* Predictbit, const char* Counter);
+void LocalCheckBranch(uint32_t PCvalue, const int* Predictbit);  // Check branch in IF stage
+void LocalUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const int* Predictbit, const char* Counter);
 void LocalBranchBufferWrite(uint32_t WritePC, uint32_t Address);  // Write BranchAddr to BTB
-void LocalPBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter);  // Update Prediction bit to taken
-void LocalPBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter);  // Update Prediction bit to not taken
+void LocalPBtaken(uint8_t Predbit, const int* Predictbit, const char* Counter);  // Update Prediction bit to taken
+void LocalPBnottaken(uint8_t Predbit, const int* Predictbit, const char* Counter);  // Update Prediction bit to not taken
 // [Always taken predictor]
 void AlwaysTakenCheckBranch(uint32_t PCvalue);  // Check branch in IF stage
 void AlwaysTakenUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr);  // Update BTB
@@ -163,7 +166,7 @@ void BTFNTUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr);  
 void BTFNTBranchBufferWrite(uint32_t WritePC, uint32_t Address);  // Write BranchAddr to BTB
 
 /* Cache memory */
-bool CheckCache();
+bool CheckCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);
 
 uint32_t ALU(uint32_t input1, uint32_t input2, char ALUSig);  // ALU
 uint32_t MUX(uint32_t input1, uint32_t input2, bool signal);  // signal == 0) input1, 1) input2
@@ -187,4 +190,4 @@ char Rformat(uint8_t funct);  // select ALU operation by funct (R-format)
 /* Overflow exception */
 void OverflowException();  // Overflow exception
 
-#endif //CAMP_PROJECT3_UNITS_H
+#endif //CAMP_PROJECT4_UNITS_H

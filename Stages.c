@@ -1,5 +1,5 @@
 //
-// Created by SNMac on 2022/05/09.
+// Created by SNMac on 2022/06/01.
 //
 
 #include <string.h>
@@ -42,7 +42,7 @@ extern DEBUGWB debugwb[2];
 /*============================Stages============================*/
 
 // Instruction Fetch (One Level Predictor)
-void OnelevelIF(const char* Predictbit) {
+void OnelevelIF(const int* Predictbit) {
     debugif.IFPC = PC.PC; debugid[0].valid = PC.valid;
     if (PC.PC == 0xffffffff) {
         ifid[0].valid = 0;
@@ -65,7 +65,7 @@ void OnelevelIF(const char* Predictbit) {
     return;
 }
 // Instruction Decode (One Level Predictor)
-void OnelevelID(const char* Predictbit, const char* Counter) {
+void OnelevelID(const int* Predictbit, const char* Counter) {
     idex[0].valid = ifid[1].valid;
     debugex[0].valid = ifid[1].valid;
 
@@ -166,7 +166,7 @@ void OnelevelID(const char* Predictbit, const char* Counter) {
 }
 
 // Instruction Fetch (Gshare Predictor)
-void GshareIF(const char* Predictbit) {
+void GshareIF(const int* Predictbit) {
     debugif.IFPC = PC.PC; debugid[0].valid = PC.valid;
     if (PC.PC == 0xffffffff) {
         ifid[0].valid = 0;
@@ -191,7 +191,7 @@ void GshareIF(const char* Predictbit) {
     return;
 }
 // Instruction Decode (Gshare Predictor)
-void GshareID(const char* Predictbit, const char* Counter) {
+void GshareID(const int* Predictbit, const char* Counter) {
     idex[0].valid = ifid[1].valid;
     debugex[0].valid = ifid[1].valid;
 
@@ -293,7 +293,7 @@ void GshareID(const char* Predictbit, const char* Counter) {
 }
 
 // Instruction Fetch (Local Predictor)
-void LocalIF(const char* Predictbit) {
+void LocalIF(const int* Predictbit) {
     debugif.IFPC = PC.PC; debugid[0].valid = PC.valid;
     if (PC.PC == 0xffffffff) {
         ifid[0].valid = 0;
@@ -319,7 +319,7 @@ void LocalIF(const char* Predictbit) {
     return;
 }
 // Instruction Decode (Local Predictor)
-void LocalID(const char* Predictbit, const char* Counter) {
+void LocalID(const int* Predictbit, const char* Counter) {
     idex[0].valid = ifid[1].valid;
     debugex[0].valid = ifid[1].valid;
 
@@ -822,7 +822,7 @@ void EX(void) {
 }
 
 // Memory Access
-void MEM(const char* Cacheset, const char* Cachesize) {
+void MEM(const int* Cacheset, const int* Cachesize) {
     memwb[0].valid = exmem[1].valid;
     debugwb[0].valid = exmem[1].valid;
     if (!(exmem[1].valid)) {
@@ -833,14 +833,13 @@ void MEM(const char* Cacheset, const char* Cachesize) {
     uint32_t MemWriteDataMUX = MUX(exmem[1].ForwardBMUX, MemtoRegMUX, memfwrdSig.MEMForward);
 
     // Cache access
-
+    CheckCache(exmem[1].ALUresult);
 
     // Memory access
     // TODO
     //  add if to memory access
     counting.cycle += 999;
-    uint32_t Readdata = DataMem(exmem[1].ALUresult, MemWriteDataMUX,
-                                exmem[1].MemRead, exmem[1].MemWrite);
+    uint32_t Readdata = DataMem(exmem[1].ALUresult, MemWriteDataMUX,exmem[1].MemRead, exmem[1].MemWrite);
 
     // Save data to pipeline
     memwb[0].PCadd8 = exmem[1].PCadd8; memwb[0].ALUresult = exmem[1].ALUresult;

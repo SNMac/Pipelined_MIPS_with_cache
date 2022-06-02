@@ -1,5 +1,5 @@
 //
-// Created by SNMac on 2022/05/09.
+// Created by SNMac on 2022/06/01.
 //
 
 #include <stdio.h>
@@ -19,6 +19,7 @@ MEMWB memwb[2];
 CONTROL_SIGNAL ctrlSig;
 ALU_CONTROL_SIGNAL ALUctrlSig;
 BRANCH_PREDICT BranchPred;
+CACHE Cache[8];
 FORWARD_SIGNAL fwrdSig;
 ID_FORWARD_SIGNAL idfwrdSig;
 MEM_FORWARD_SIGNAL memfwrdSig;
@@ -91,7 +92,7 @@ uint32_t DataMem(uint32_t Addr, uint32_t Writedata, bool MemRead, bool MemWrite)
 }
 
 // [One-level branch predictor]
-void CheckBranch(uint32_t PCvalue, const char* Predictbit) {  // Check if PC is branch instruction
+void CheckBranch(uint32_t PCvalue, const int* Predictbit) {  // Check if PC is branch instruction
     BranchPred.instPC[0] = PCvalue;
     if (BranchPred.BTBsize == 0 && BranchPred.DPsize == 0) {  // BTB, DP is empty
         BranchPred.AddressHit[0] = 0;  // Branch not predicted
@@ -124,7 +125,7 @@ void CheckBranch(uint32_t PCvalue, const char* Predictbit) {  // Check if PC is 
         if (BranchPred.DP[BranchPred.DPindex[0]][0] == PCvalue) {
             // PC found in BTB
             switch (*Predictbit) {
-                case '1' :  // One-bit predictor
+                case 1 :  // One-bit predictor
                     if (BranchPred.DP[BranchPred.DPindex[0]][1] == 1)  {
                         BranchPred.Predict[0] = 1;  // Predict branch taken
                     }
@@ -133,7 +134,7 @@ void CheckBranch(uint32_t PCvalue, const char* Predictbit) {  // Check if PC is 
                     }
                     break;
 
-                case '2' :  // Two-bit predictor
+                case 2 :  // Two-bit predictor
                     if (BranchPred.DP[BranchPred.DPindex[0]][1] == 2 || BranchPred.DP[BranchPred.DPindex[0]][1] == 3)  {
                         BranchPred.Predict[0] = 1;  // Predict branch taken
                     }
@@ -152,7 +153,7 @@ void CheckBranch(uint32_t PCvalue, const char* Predictbit) {  // Check if PC is 
     }
     return;
 }
-void UpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const char* Predictbit, const char* Counter) {
+void UpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const int* Predictbit, const char* Counter) {
     if (Branch) {  // beq, bne
         if (BranchPred.AddressHit[1]) {  // PC found in BTB
             if (PCBranch) {  // Branch taken
@@ -190,7 +191,7 @@ void UpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const c
         }
     }
 }
-void BranchBufferWrite(uint32_t WritePC, uint32_t Address, const char* Predictbit) {  // Write PC and BranchAddr to BTB
+void BranchBufferWrite(uint32_t WritePC, uint32_t Address, const int* Predictbit) {  // Write PC and BranchAddr to BTB
     if (BranchPred.BTBsize >= BTBMAX) {  // BTB has no space
         uint32_t BTBmin = BranchPred.BTB[0][2];
         int BTBminindex;
@@ -218,7 +219,7 @@ void BranchBufferWrite(uint32_t WritePC, uint32_t Address, const char* Predictbi
         // Substitute low frequency used branch
         BranchPred.DP[DPminindex][0] = WritePC;
 
-        if (*Predictbit == '2') {  // Two-bit predictor
+        if (*Predictbit == 2) {  // Two-bit predictor
             BranchPred.DP[DPminindex][1] = 1;
         }
         else {  // One-bit predictor
@@ -237,13 +238,13 @@ void BranchBufferWrite(uint32_t WritePC, uint32_t Address, const char* Predictbi
     BranchPred.DPsize++;
     return;
 }
-void PBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {  // Update prediction bit to taken
+void PBtaken(uint8_t Predbit, const int* Predictbit, const char* Counter) {  // Update prediction bit to taken
     switch (*Predictbit) {
-        case '1' :  // One-bit predictor
+        case 1 :  // One-bit predictor
             BranchPred.DP[BranchPred.DPindex[1]][1] =  1;  // PB = 1
             break;
 
-        case '2' :  // Two-bit predictor
+        case 2 :  // Two-bit predictor
             if (*Counter == '1') {  // Saturating Counter
                 if (Predbit < 3) {  // PB == 00 or 01 or 10
                     BranchPred.DP[BranchPred.DPindex[1]][1]++;  // PB++
@@ -269,13 +270,13 @@ void PBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {  //
     }
     return;
 }
-void PBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {  // Update prediction bit to not taken
+void PBnottaken(uint8_t Predbit, const int* Predictbit, const char* Counter) {  // Update prediction bit to not taken
     switch (*Predictbit) {
-        case '1' :  // One-bit predictor
+        case 1 :  // One-bit predictor
             BranchPred.DP[BranchPred.DPindex[1]][1] =  0;  // PB = 0
             break;
 
-        case '2' :  // Two-bit predictor
+        case 2 :  // Two-bit predictor
             if (*Counter == '1') {  // Saturating Counter
                 if (Predbit > 0) {  // PB == 11 or 10 or 01
                     BranchPred.DP[BranchPred.DPindex[1]][1]--;  // PB--
@@ -303,7 +304,7 @@ void PBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter) { 
 }
 
 // [Gshare branch predictor]
-void GshareCheckBranch(uint32_t PCvalue, const char* Predictbit) {
+void GshareCheckBranch(uint32_t PCvalue, const int* Predictbit) {
     BranchPred.instPC[0] = PCvalue;
     if (BranchPred.BTBsize == 0) {  // BTB is empty
         BranchPred.AddressHit[0] = 0;  // Branch not predicted
@@ -359,7 +360,7 @@ void GshareCheckBranch(uint32_t PCvalue, const char* Predictbit) {
     }
     return;
 }
-void GshareUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const char* Predictbit, const char* Counter) {
+void GshareUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const int* Predictbit, const char* Counter) {
     if (Branch) {  // beq, bne
         BranchPred.GLHR[3] = BranchPred.GLHR[2];
         BranchPred.GLHR[2] = BranchPred.GLHR[1];
@@ -426,13 +427,13 @@ void GshareBranchBufferWrite(uint32_t WritePC, uint32_t Address) {
     BranchPred.BTBsize++;
     return;
 }
-void GsharePBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {
+void GsharePBtaken(uint8_t Predbit, const int* Predictbit, const char* Counter) {
     switch (*Predictbit) {
-        case '1' :  // One-bit predictor
+        case 1 :  // One-bit predictor
             BranchPred.BHT[BranchPred.BHTindex[1]][1] =  1;  // PB = 1
             break;
 
-        case '2' :  // Two-bit predictor
+        case 2 :  // Two-bit predictor
             if (*Counter == '1') {  // Saturating Counter
                 if (Predbit < 3) {  // PB == 00 or 01 or 10
                     BranchPred.BHT[BranchPred.BHTindex[1]][1]++;  // PB++
@@ -458,13 +459,13 @@ void GsharePBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter)
     }
     return;
 }
-void GsharePBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {
+void GsharePBnottaken(uint8_t Predbit, const int* Predictbit, const char* Counter) {
     switch (*Predictbit) {
-        case '1' :  // One-bit predictor
+        case 1 :  // One-bit predictor
             BranchPred.BHT[BranchPred.BHTindex[1]][1] =  0;  // PB = 0
             break;
 
-        case '2' :  // Two-bit predictor
+        case 2 :  // Two-bit predictor
             if (*Counter == '1') {  // Saturating Counter
                 if (Predbit > 0) {  // PB == 11 or 10 or 01
                     BranchPred.BHT[BranchPred.BHTindex[1]][1]--;  // PB--
@@ -512,7 +513,7 @@ bool LocalCheckLHR(uint32_t PCvalue) {
     BranchPred.Predict[0] = 0;  // Predict branch not taken
     return 0;
 }
-void LocalCheckBranch(uint32_t PCvalue, const char* Predictbit) {
+void LocalCheckBranch(uint32_t PCvalue, const int* Predictbit) {
     if (BranchPred.BTBsize == 0) {  // BTB is empty
         BranchPred.AddressHit[0] = 0;  // Branch not predicted
         BranchPred.Predict[0] = 0;  // Predict branch not taken
@@ -540,7 +541,7 @@ void LocalCheckBranch(uint32_t PCvalue, const char* Predictbit) {
         if (BranchPred.BHT[BranchPred.BHTindex[0]][0] == BranchPred.LHR[BranchPred.LHRindex[0]][1]) {
             // IFBHT index found in BHT
             switch (*Predictbit) {
-                case '1' :  // One-bit predictor
+                case 1 :  // One-bit predictor
                     if (BranchPred.BHT[BranchPred.BHTindex[0]][1] == 1)  {
                         BranchPred.Predict[0] = 1;  // Predict branch taken
                     }
@@ -549,7 +550,7 @@ void LocalCheckBranch(uint32_t PCvalue, const char* Predictbit) {
                     }
                     break;
 
-                case '2' :  // Two-bit predictor
+                case 2 :  // Two-bit predictor
                     if (BranchPred.BHT[BranchPred.BHTindex[0]][1] == 2 || BranchPred.BHT[BranchPred.BHTindex[0]][1] == 3)  {
                         BranchPred.Predict[0] = 1;  // Predict branch taken
                     }
@@ -567,7 +568,7 @@ void LocalCheckBranch(uint32_t PCvalue, const char* Predictbit) {
     }
     return;
 }
-void LocalUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const char* Predictbit, const char* Counter) {
+void LocalUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr, const int* Predictbit, const char* Counter) {
     if (Branch) {  // beq, bne
         for (int j = 3; j >= 0; j--) {
             BranchPred.GLHR[j] = BranchPred.LHR[BranchPred.LHRindex[1]][1] >> j & 1;
@@ -658,13 +659,13 @@ void LocalBranchBufferWrite(uint32_t WritePC, uint32_t Address) {
     BranchPred.LHRsize++;
     return;
 }
-void LocalPBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {
+void LocalPBtaken(uint8_t Predbit, const int* Predictbit, const char* Counter) {
     switch (*Predictbit) {
-        case '1' :  // One-bit predictor
+        case 1 :  // One-bit predictor
             BranchPred.BHT[BranchPred.BHTindex[1]][1] =  1;  // PB = 1
             break;
 
-        case '2' :  // Two-bit predictor
+        case 2 :  // Two-bit predictor
             if (*Counter == '1') {  // Saturating Counter
                 if (Predbit < 3) {  // PB == 00 or 01 or 10
                     BranchPred.BHT[BranchPred.BHTindex[1]][1]++;  // PB++
@@ -690,13 +691,13 @@ void LocalPBtaken(uint8_t Predbit, const char* Predictbit, const char* Counter) 
     }
     return;
 }
-void LocalPBnottaken(uint8_t Predbit, const char* Predictbit, const char* Counter) {
+void LocalPBnottaken(uint8_t Predbit, const int* Predictbit, const char* Counter) {
     switch (*Predictbit) {
-        case '1' :  // One-bit predictor
+        case 1 :  // One-bit predictor
             BranchPred.BHT[BranchPred.BHTindex[1]][1] =  0;  // PB = 0
             break;
 
-        case '2' :  // Two-bit predictor
+        case 2 :  // Two-bit predictor
             if (*Counter == '1') {  // Saturating Counter
                 if (Predbit > 0) {  // PB == 11 or 10 or 01
                     BranchPred.BHT[BranchPred.BHTindex[1]][1]--;  // PB--
@@ -898,6 +899,13 @@ void BTFNTBranchBufferWrite(uint32_t WritePC, uint32_t Address) {
     BranchPred.BTBindex[1] = BranchPred.BTBsize;
     BranchPred.BTBsize++;
     return;
+}
+
+// [Cache memory]
+bool CheckCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
+    uint8_t offset = (Addr & 0x0000003f) >> 2;
+    uint8_t index;
+
 }
 
 // [ALU]

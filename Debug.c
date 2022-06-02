@@ -1,6 +1,7 @@
 //
-// Created by SNMac on 2022/05/13.
+// Created by SNMac on 2022/06/01.
 //
+
 #include <stdio.h>
 #include <string.h>
 
@@ -76,7 +77,7 @@ void printIF(int Predictor) {
     return;
 }
 
-void printID(int Predictor, const char* Predictbit, const char* Counter) {
+void printID(int Predictor, const int* Predictbit, const char* Counter) {
     printf("\n<<<<<<<<<<<<<<<<<<<<<ID>>>>>>>>>>>>>>>>>>>>>\n");
     if (!(debugid[1].valid)) {  // Pipeline is invalid
         printf("IF/ID pipeline is invalid\n");
@@ -218,7 +219,7 @@ void printEX(void) {
     return;
 }
 
-void printMEM(const char* Cacheset, const char* Cachesize) {
+void printMEM(const int* Cacheset, const int* Cachesize) {
     debugwb[0].ControlNOP = debugmem[1].ControlNOP;
     printf("\n<<<<<<<<<<<<<<<<<<<<<MEM>>>>>>>>>>>>>>>>>>>>>\n");
     if (!(debugmem[1].valid)) {
@@ -418,7 +419,7 @@ void printEXforward(void) {
     return;
 }
 
-void printUpdateBTB(const int* Predictor, const char* Predictbit, const char* Counter) {
+void printUpdateBTB(const int* Predictor, const int* Predictbit, const char* Counter) {
     if (debugid[1].Branch) {
         if (debugid[1].AddressHit) {
             if (debugid[1].PCBranch) {
@@ -505,13 +506,13 @@ void printUpdateBTB(const int* Predictor, const char* Predictbit, const char* Co
     return;
 }
 
-void printPBtaken(const int* Predictor, const char* Predictbit, const char* Counter) {
+void printPBtaken(const int* Predictor, const int* Predictbit, const char* Counter) {
     switch (*Predictbit) {
-        case '1' :
+        case 1 :
             printf("<Update PB to 1>\n");
             break;
 
-        case '2' :
+        case 2 :
             if (*Counter == '1') {
                 if (debugid[1].PB == 3 || debugid[1].PB == 2) {
                     printf("<Update PB to 3>\n");
@@ -558,12 +559,12 @@ void printPBtaken(const int* Predictor, const char* Predictbit, const char* Coun
     return;
 }
 
-void printPBnottaken(const int* Predictor, const char* Predictbit, const char* Counter) {
+void printPBnottaken(const int* Predictor, const int* Predictbit, const char* Counter) {
     switch (*Predictbit) {
-        case '1' :
+        case 1 :
             printf("<Update PB to 0>\n");
             break;
-        case '2' :
+        case 2 :
             if (*Counter == '1') {
                 if (debugid[1].PB == 0 || debugid[1].PB == 1) {
                     printf("<Update PB to 0>\n");
