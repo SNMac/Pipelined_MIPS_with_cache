@@ -75,7 +75,7 @@ void RegsWrite(uint8_t Writereg, uint32_t Writedata, bool RegWrite) {
 
 // [Data memory]
 uint32_t DataMem(uint32_t Addr, uint32_t Writedata, bool MemRead, bool MemWrite) {
-    counting.cycle += 999;
+    counting.cycle += 1000;
     if (MemRead) {  // MemRead asserted, MemWrite De-asserted
         if (Addr > 0x1000000) {  // loading outside of memory
             fprintf(stderr, "ERROR: Accessing outside of memory\n");
@@ -1074,12 +1074,12 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
 }
 void AllocateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
     int way;
-    counting.cycle += 999;
     debugmem[1].replaceCache = 0;
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     debugmem[1].CachenowAddr = memCacheIndex;
     for (way = 0; way < *Cacheset; way++) {  // Find all $set
         if (Cache[way].Cache[Cache->index][0][0] == 0) {  // $line is invalid
+            counting.cycle += 1000;
             Cache[way].Cache[Cache->index][0][0] = 1;  // Set $line to valid
             Cache[way].Cache[Cache->index][1][0] = Cache->tag;
             for (int offset = 0; offset < CACHELINESIZE; offset += 4) {
@@ -1128,19 +1128,21 @@ void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
 void UpdateLRU(uint8_t hitway, const int* Cacheset) {
     for (int way = 0; way < *Cacheset; way++) {  // Find all $set
         // Saving value to shift array
-        Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x3) >> 1;
-        Cache[way].Shiftreg[0] = (Cache[way].Cache[Cache->index][3][0] & 0x1);
-        // Shifting left
-        Cache[way].Shiftreg[2] = Cache[way].Shiftreg[1];
-        Cache[way].Shiftreg[1] = Cache[way].Shiftreg[0];
-        if (way == hitway) {  // Update shift register to 1 for HIT set
-            Cache[way].Shiftreg[0] = 1;
+        Cache[way].Shiftreg[2] = (Cache[way].Cache[Cache->index][3][0] & 0x4) >> 2;
+        Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x2) >> 1;
+        // Shifting right
+        Cache[way].Shiftreg[0] = Cache[way].Shiftreg[1];
+        Cache[way].Shiftreg[1] = Cache[way].Shiftreg[2];
+        if (way == hitway) {
+            Cache[way].Shiftreg[2] = 1;  // Update shift register to 1 for HIT set
         } else {
-            Cache[way].Shiftreg[0] = 0;
+            Cache[way].Shiftreg[2] = 0;
         }
+
         // Saving shifted value to Cache
-        Cache[way].Cache[Cache->index][3][0] = Cache[way].Shiftreg[2] + 2 * Cache[way].Shiftreg[1]
-                                                      + 4 * Cache[way].Shiftreg[0];
+        Cache[way].Cache[Cache->index][3][0] = 4 * Cache[way].Shiftreg[2] + 2 * Cache[way].Shiftreg[1]
+                                               + Cache[way].Shiftreg[0];
+        debugmem[1].shiftReg = Cache[way].Cache[Cache->index][3][0];
     }
     return;
 }
@@ -1151,11 +1153,11 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     // Saving value to shift array & compare array
     for (int way = 0; way < *Cacheset; way++) {
-        Cache[way].Shiftreg[2] = Cache[way].Cache[Cache->index][3][0] >> 2;
-        Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x3) >> 1;
+        Cache[way].Shiftreg[2] = (Cache[way].Cache[Cache->index][3][0] & 0x4) >> 2;
+        Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x2) >> 1;
         Cache[way].Shiftreg[0] = (Cache[way].Cache[Cache->index][3][0] & 0x1);
-        compare[way] = Cache[way].Shiftreg[2] + 2 * Cache[way].Shiftreg[1]
-                              + 4 * Cache[way].Shiftreg[0];
+        compare[way] = 4 * Cache[way].Shiftreg[2] + 2 * Cache[way].Shiftreg[1]
+                              + Cache[way].Shiftreg[0];
     }
     // Compare shift register value (= Find oldest set)
     for (int way = 1; way < *Cacheset; way++) {
@@ -1166,7 +1168,7 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
     // Replace oldest set's data to new data
     if (Cache[old].Cache[Cache->index][4][0] == 1) {  // $line dirty bit is TRUE
         // Write-back policy, write allocate
-        counting.cycle += 999;
+        counting.cycle += 1000;
         debugmem[1].dirtyline = 1;
         uint32_t sendMem;
         uint32_t memAddr;
@@ -1175,39 +1177,39 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
         switch (*Cacheset) {
             case 1 :  // Direct-mapped
                 if (*Cachesize == 256) {  // 256 bytes, 4 $line per way
-                    memAddr = Cache->tag << 8;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 8;
                     memAddr = memAddr | (Cache->index << 6);
                 } else if (*Cachesize == 512) {  // 512 bytes, 8 $line per way
-                    memAddr = Cache->tag << 9;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 9;
                     memAddr = memAddr | (Cache->index << 6);
                 } else {  // 1024 bytes, 16 $line per way
-                    memAddr = Cache->tag << 10;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 10;
                     memAddr = memAddr | (Cache->index << 6);
                 }
                 break;
 
             case 2 :  // 2-way
                 if (*Cachesize == 256) {  // 128 bytes, 2 $line per way
-                    memAddr = Cache->tag << 7;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 7;
                     memAddr = memAddr | (Cache->index << 6);
                 } else if (*Cachesize == 512) {  // 256 bytes, 4 $line per way
-                    memAddr = Cache->tag << 8;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 8;
                     memAddr = memAddr | (Cache->index << 6);
                 } else {  // 512 bytes, 8 $line per way
-                    memAddr = Cache->tag << 9;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 9;
                     memAddr = memAddr | (Cache->index << 6);
                 }
                 break;
 
             case 4 :  // 4-way
                 if (*Cachesize == 256) {  // 64 bytes, 1 $line per way
-                    memAddr = Cache->tag << 6;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 6;
                     Cache->index = 0;
                 } else if (*Cachesize == 512) {  // 128 bytes, 2 $line per way
-                    memAddr = Cache->tag << 7;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 7;
                     memAddr = memAddr | (Cache->index << 6);
                 } else {  // 256 bytes, 4 $line per way
-                    memAddr = Cache->tag << 8;
+                    memAddr = Cache[old].Cache[Cache->index][1][0] << 8;
                     memAddr = memAddr | (Cache->index << 6);
                 }
                 break;
@@ -1217,12 +1219,13 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
                 exit(EXIT_FAILURE);
         }
         debugmem[1].CacheoldAddr = memAddr;
+        debugmem[1].replaceTag = Cache[old].Cache[Cache->index][1][0];
         // Send $line to memory
         for (int offset = 0; offset < CACHELINESIZE; offset += 4) {
-            sendMem = (Cache[old].Cache[Cache->index][2][offset] & 0xff000000) >> 24;
-            sendMem = sendMem | (Cache[old].Cache[Cache->index][2][offset + 1] & 0x00ff0000) >> 16;
-            sendMem = sendMem | (Cache[old].Cache[Cache->index][2][offset + 2] & 0x0000ff00) >> 8;
-            sendMem = sendMem | Cache[old].Cache[Cache->index][2][offset + 3] & 0x000000ff;
+            sendMem = Cache[old].Cache[Cache->index][2][offset] << 24;
+            sendMem = sendMem | Cache[old].Cache[Cache->index][2][offset + 1] << 16;
+            sendMem = sendMem | Cache[old].Cache[Cache->index][2][offset + 2] << 8;
+            sendMem = sendMem | Cache[old].Cache[Cache->index][2][offset + 3];
             Memory[memAddr / 4] = sendMem;
             memAddr += 4;
         }

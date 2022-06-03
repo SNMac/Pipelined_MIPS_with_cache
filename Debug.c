@@ -221,7 +221,7 @@ void printEX(void) {
     return;
 }
 
-void printMEM(const int* Cachewrite) {
+void printMEM(const int* Cacheset, const int* Cachewrite) {
     debugwb[0].ControlNOP = debugmem[1].ControlNOP;
     printf("\n<<<<<<<<<<<<<<<<<<<<<MEM>>>>>>>>>>>>>>>>>>>>>\n");
     if (!(debugmem[1].valid)) {
@@ -248,7 +248,11 @@ void printMEM(const int* Cachewrite) {
         printf("Memory address : 0x%08x\n", debugmem[1].Addr);
         if (debugmem[1].CacheHIT) {
             printf("<Cache HIT>\n");
-            printf("%d-set Cache[0x%x][0x%x][0x%x] load -> 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+            for (int way = 0; way < *Cacheset; way++) {
+                printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                       way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+            }
+            printf("%d-set Cache[%d][0x%06x][0x%02x] load -> 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                         debugmem[1].Readdata, debugmem[1].Readdata);
         } else {
             if (debugmem[1].ColdorConflictMISS) {
@@ -263,10 +267,10 @@ void printMEM(const int* Cachewrite) {
                 if (debugmem[1].dirtyline) {
                     printf("Memory coherence hazard occured.\n");
                     printf("Update memory to cache data.\n");
-                    printf("%d-set Cache[0x%x][0x%x][0 ~ 63] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CacheoldAddr);
+                    printf("%d-set Cache[%d][0x%06x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, debugmem[1].replaceTag, debugmem[1].CacheoldAddr);
                 }
             }
-            printf("%d-set Cache[0x%x][0x%x][0 ~ 63] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
+            printf("%d-set Cache[%d][0x%06x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
         }
     } else if (debugmem[1].MemWrite) {  // sw
         printf("Memory address : 0x%08x\n", debugmem[1].Addr);
@@ -276,7 +280,11 @@ void printMEM(const int* Cachewrite) {
                 case 1 :
                     // Write-through policy
                     // No write allocate
-                    printf("%d-set Cache[0x%x][0x%x][0x%x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                    for (int way = 0; way < *Cacheset; way++) {
+                        printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                               way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    }
+                    printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                 debugmem[1].Writedata, debugmem[1].Writedata);
                     printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
                     break;
@@ -284,7 +292,11 @@ void printMEM(const int* Cachewrite) {
                 case 2 :
                     // Write-back policy
                     // Write allocate
-                    printf("%d-set Cache[0x%x][0x%x][0x%x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                    for (int way = 0; way < *Cacheset; way++) {
+                        printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                               way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    }
+                    printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                 debugmem[1].Writedata, debugmem[1].Writedata);
                     break;
             }
@@ -307,11 +319,11 @@ void printMEM(const int* Cachewrite) {
                             if (debugmem[1].dirtyline) {
                                 printf("Memory coherence hazard occured.\n");
                                 printf("Update memory to cache data.\n");
-                                printf("%d-set Cache[0x%x][0x%x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CacheoldAddr);
+                                printf("%d-set Cache[%d][0x%06x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, debugmem[1].replaceTag, debugmem[1].CacheoldAddr);
                             }
                         }
-                        printf("%d-set Cache[0x%x][0x%x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
-                        printf("%d-set Cache[0x%x][0x%x][0x%x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                        printf("%d-set Cache[%d][0x%06x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
+                        printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                     debugmem[1].Writedata, debugmem[1].Writedata);
                         break;
                 }
@@ -333,11 +345,11 @@ void printMEM(const int* Cachewrite) {
                             if (debugmem[1].dirtyline) {
                                 printf("Memory coherence hazard occured.\n");
                                 printf("Update memory to cache data.\n");
-                                printf("%d-set Cache[0x%x][0x%x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CacheoldAddr);
+                                printf("%d-set Cache[%d][0x%06x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, debugmem[1].replaceTag, debugmem[1].CacheoldAddr);
                             }
                         }
-                        printf("%d-set Cache[0x%x][0x%x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
-                        printf("%d-set Cache[0x%x][0x%x][0x%x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                        printf("%d-set Cache[%d][0x%06x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
+                        printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                     debugmem[1].Writedata, debugmem[1].Writedata);
                         break;
                 }

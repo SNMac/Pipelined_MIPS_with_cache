@@ -6,7 +6,7 @@
 #define CAMP_PROJECT4_MAIN_H
 
 typedef struct _COUNTING {
-    int cycle;  // Clock cycle count
+    unsigned long long cycle;  // Clock cycle count
     int RegOpcount;  // Register operation count
     int Memcount;  // Memory access instruction count
     int PredictHitCount;  // Branch prediction count

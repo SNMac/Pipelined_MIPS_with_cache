@@ -50,6 +50,8 @@ typedef struct _DEBUGMEM {
     uint32_t Addr;
     uint32_t CacheoldAddr;
     uint32_t CachenowAddr;
+    uint32_t replaceTag;
+    uint8_t shiftReg;
     uint32_t Writedata;
     uint32_t Readdata;
     char instprint[100];
@@ -67,7 +69,7 @@ typedef struct _DEBUGWB {
 void printIF(int Predictor);
 void printID(int Predictor, const int* Predictbit, const char* Counter);
 void printEX(void);
-void printMEM(const int* Cachewrite);
+void printMEM(const int* Cacheset, const int* Cachewrite);
 void printWB(void);
 void printRformat(void);
 void printIDforward(void);

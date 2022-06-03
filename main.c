@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
         Predictor = PredSelect();
         if (Predictor == '1' || Predictor == '2' || Predictor == '3') {
             PredictionBit = PBSelect();
-            if (PredictionBit == '2') {
+            if (PredictionBit == 2) {
                 Counter = CounterSelect();
             }
         }
@@ -410,7 +410,7 @@ void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cach
         printIF(1);
         printID(1, Predictbit, Counter);
         printEX();
-        printMEM(Cachewrite);
+        printMEM(Cacheset, Cachewrite);
         printWB();
         printnextPC();
 
@@ -418,7 +418,7 @@ void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cach
         DebugPipelineHandsOver();
 
         counting.cycle++;
-        printf("\n================================ CC %d ================================\n", counting.cycle);
+        printf("\n================================ CC %llu ================================\n", counting.cycle);
     }
 }
 
@@ -436,7 +436,7 @@ void GsharePredict(const int* Predictbit, const char* Counter, const int* Caches
         printIF(2);
         printID(2, Predictbit, Counter);
         printEX();
-        printMEM(Cachewrite);
+        printMEM(Cacheset, Cachewrite);
         printWB();
         printnextPC();
 
@@ -444,7 +444,7 @@ void GsharePredict(const int* Predictbit, const char* Counter, const int* Caches
         DebugPipelineHandsOver();
 
         counting.cycle++;
-        printf("\n================================ CC %d ================================\n", counting.cycle);
+        printf("\n================================ CC %llu ================================\n", counting.cycle);
     }
 }
 
@@ -462,7 +462,7 @@ void LocalPredict(const int* Predictbit, const char* Counter, const int* Cachese
         printIF(3);
         printID(3, Predictbit, Counter);
         printEX();
-        printMEM(Cachewrite);
+        printMEM(Cacheset, Cachewrite);
         printWB();
         printnextPC();
 
@@ -470,7 +470,7 @@ void LocalPredict(const int* Predictbit, const char* Counter, const int* Cachese
         DebugPipelineHandsOver();
 
         counting.cycle++;
-        printf("\n================================ CC %d ================================\n", counting.cycle);
+        printf("\n================================ CC %llu ================================\n", counting.cycle);
     }
 }
 
@@ -489,7 +489,7 @@ void AlwaysTaken(const int* Cacheset, const int* Cachesize, const int* Cachewrit
         printIF(4);
         printID(4, 0, 0);
         printEX();
-        printMEM(Cachewrite);
+        printMEM(Cacheset, Cachewrite);
         printWB();
         printnextPC();
 
@@ -497,7 +497,7 @@ void AlwaysTaken(const int* Cacheset, const int* Cachesize, const int* Cachewrit
         DebugPipelineHandsOver();
 
         counting.cycle++;
-        printf("\n================================ CC %d ================================\n", counting.cycle);
+        printf("\n================================ CC %llu ================================\n", counting.cycle);
     }
 }
 
@@ -516,7 +516,7 @@ void AlwaysnotTaken(const int* Cacheset, const int* Cachesize, const int* Cachew
         printIF(5);
         printID(5, 0, 0);
         printEX();
-        printMEM(Cachewrite);
+        printMEM(Cacheset, Cachewrite);
         printWB();
         printnextPC();
 
@@ -524,7 +524,7 @@ void AlwaysnotTaken(const int* Cacheset, const int* Cachesize, const int* Cachew
         DebugPipelineHandsOver();
 
         counting.cycle++;
-        printf("\n================================ CC %d ================================\n", counting.cycle);
+        printf("\n================================ CC %llu ================================\n", counting.cycle);
     }
 }
 
@@ -542,7 +542,7 @@ void BTFNT(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
         printIF(6);
         printID(6, 0, 0);
         printEX();
-        printMEM(Cachewrite);
+        printMEM(Cacheset, Cachewrite);
         printWB();
         printnextPC();
 
@@ -550,7 +550,7 @@ void BTFNT(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
         DebugPipelineHandsOver();
 
         counting.cycle++;
-        printf("\n================================ CC %d ================================\n", counting.cycle);
+        printf("\n================================ CC %llu ================================\n", counting.cycle);
     }
 }
 
@@ -840,9 +840,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
         printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
         for (int index = 0; index < *Cachesize / CACHELINESIZE; index++) {
                 printf("##   %d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
-                for (int j = 0; j <= 2; j++) {
-                    printf("%d", Cache[way].Cache[index][3][0] >> j & 1);
-                }
+                printf("%d%d%d", (Cache[way].Cache[index][3][0] & 0x4) >> 2, (Cache[way].Cache[index][3][0] & 0x2) >> 1, Cache[way].Cache[index][3][0] & 0x1);
                 printf("       ##   %d   ##\n", Cache[way].Cache[index][4][0]);
         }
         printf("###########################################################\n");
@@ -970,7 +968,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
     }
     printf("\n");
     printf("Final return value R[2] = %d\n", R[2]);
-    printf("# of clock cycles : %d\n", counting.cycle);
+    printf("# of clock cycles : %llu\n", counting.cycle);
     printf("# of register operations : %d\n", counting.RegOpcount);
     printf("# of taken branches : %d\n", counting.takenBranch);
     printf("# of not taken branches : %d\n", counting.nottakenBranch);
