@@ -840,7 +840,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
         printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
         for (int index = 0; index < *Cachesize / CACHELINESIZE; index++) {
                 printf("##   %d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
-                for (int j = 2; j >= 0; j--) {
+                for (int j = 0; j <= 2; j++) {
                     printf("%d", Cache[way].Cache[index][3][0] >> j & 1);
                 }
                 printf("       ##   %d   ##\n", Cache[way].Cache[index][4][0]);

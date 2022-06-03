@@ -966,8 +966,8 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                     debugmem[1].CacheHIT = 1;
                     UpdateLRU(Cache->way, Cacheset);
                     CacheRead = Cache[Cache->way].Cache[Cache->index][2][Cache->offset] << 24;
-                    CacheRead = CacheRead | Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] << 16;
-                    CacheRead = CacheRead | Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] << 8;
+                    CacheRead = CacheRead | (Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] << 16);
+                    CacheRead = CacheRead | (Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] << 8);
                     CacheRead = CacheRead | Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 3];
                     return CacheRead;
                 }
@@ -1004,7 +1004,7 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                             UpdateLRU(Cache->way, Cacheset);
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
-                            Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) << 8;
+                            Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) >> 8;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 3] = Writedata & 0x000000ff;
                             return DataMem(Addr, Writedata, MemRead, MemWrite);
                         }
@@ -1036,7 +1036,7 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                             Cache[Cache->way].Cache[Cache->index][4][0] = 1;  // Set dirty bit to 1
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
-                            Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) << 8;
+                            Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) >> 8;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 3] = Writedata & 0x000000ff;
                             return 0;
                         }
@@ -1060,7 +1060,7 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                 Cache[Cache->way].Cache[Cache->index][4][0] = 1;  // Set dirty bit to 1
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) << 8;
+                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) >> 8;
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 3] = Writedata & 0x000000ff;
                 return 0;
 
@@ -1094,8 +1094,8 @@ void AllocateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
         }
     }
     if (way == *Cacheset) {  // All $lines are valid (= have to replace oldest one)
-        ReplaceCache(Addr, Cacheset, Cachesize);
         debugmem[1].replaceCache = 1;
+        ReplaceCache(Addr, Cacheset, Cachesize);
     }
     return;
 }

@@ -277,7 +277,7 @@ void printMEM(const int* Cachewrite) {
                     // Write-through policy
                     // No write allocate
                     printf("%d-set Cache[0x%x][0x%x][0x%x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
-                           debugmem[1].Writedata, debugmem[1].Writedata);
+                                                                                debugmem[1].Writedata, debugmem[1].Writedata);
                     printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
                     break;
 
@@ -285,7 +285,7 @@ void printMEM(const int* Cachewrite) {
                     // Write-back policy
                     // Write allocate
                     printf("%d-set Cache[0x%x][0x%x][0x%x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
-                           debugmem[1].Writedata, debugmem[1].Writedata);
+                                                                                debugmem[1].Writedata, debugmem[1].Writedata);
                     break;
             }
         } else {  // Cache MISS
@@ -374,8 +374,7 @@ void printWB(void) {
 
     if (debugwb[1].RegWrite) {
         printf("R[%d] = 0x%x (%d)\n", debugwb[1].Writereg, R[debugwb[1].Writereg], R[debugwb[1].Writereg]);
-    }
-    else {
+    } else {
         printf("There is no register write\n");
     }
 
