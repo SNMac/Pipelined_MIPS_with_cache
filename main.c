@@ -347,8 +347,8 @@ void CacheSetting(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
         Cache[way].Cache = (uint32_t***)malloc(sizeof(uint32_t**) * (*Cachesize / CACHELINESIZE));
         for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
-            Cache[way].Cache[i] = (uint32_t**)malloc(sizeof(uint32_t*) * 4);
-            for (int j = 0; j < 4; j++) {
+            Cache[way].Cache[i] = (uint32_t**)malloc(sizeof(uint32_t*) * 5);
+            for (int j = 0; j < 5; j++) {
                 Cache[way].Cache[i][j] = (uint32_t*)malloc(sizeof(uint32_t) * 64);
             }
         }
@@ -359,7 +359,7 @@ void CacheSetting(const int* Cacheset, const int* Cachesize) {
 void FreeCache(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
         for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
-            for (int j = 0; j < 4; j++) {
+            for (int j = 0; j < 5; j++) {
                 free(Cache[way].Cache[i][j]);
             }
             free(Cache[way].Cache[i]);
@@ -531,6 +531,10 @@ void Firstinit(const int* Predictbit) {
     memset(&PC, 0, sizeof(PROGRAM_COUNTER));
     memset(&Memory, 0, sizeof(Memory));
     memset(&R, 0, sizeof(R));
+    memset(&ifid, 0, sizeof(IFID));
+    memset(&idex, 0, sizeof(IDEX));
+    memset(&exmem, 0, sizeof(EXMEM));
+    memset(&memwb, 0, sizeof(MEMWB));
     memset(&BranchPred, 0, sizeof(BRANCH_PREDICT));
     memset(&Cache, 0, sizeof(CACHE));
     memset(&counting, 0, sizeof(COUNTING));
