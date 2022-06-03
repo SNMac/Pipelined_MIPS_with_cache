@@ -372,11 +372,11 @@ int CacheWriteSelect(void) {
 // Cache setting
 void CacheSetting(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
-        Cache[way].Cache = (uint32_t***)malloc(sizeof(uint32_t**) * (*Cachesize / CACHELINESIZE));
+        Cache[way].Cache = (uint32_t***)calloc((*Cachesize / CACHELINESIZE), sizeof(uint32_t**));
         for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
-            Cache[way].Cache[i] = (uint32_t**)malloc(sizeof(uint32_t*) * 5);
+            Cache[way].Cache[i] = (uint32_t**)calloc(5, sizeof(uint32_t*));
             for (int j = 0; j < 5; j++) {
-                Cache[way].Cache[i][j] = (uint32_t*)malloc(sizeof(uint32_t) * 64);
+                Cache[way].Cache[i][j] = (uint32_t*)calloc(64, sizeof(uint32_t));
             }
         }
     }
@@ -558,6 +558,10 @@ void Firstinit(const int* Predictbit) {
     memset(&PC, 0, sizeof(PROGRAM_COUNTER));
     memset(&Memory, 0, sizeof(Memory));
     memset(&R, 0, sizeof(R));
+    memset(&ifid, 0, sizeof(IFID));
+    memset(&idex, 0, sizeof(IDEX));
+    memset(&exmem, 0, sizeof(EXMEM));
+    memset(&memwb, 0, sizeof(MEMWB));
     memset(&BranchPred, 0, sizeof(BRANCH_PREDICT));
     memset(&counting, 0, sizeof(COUNTING));
     switch (*Predictbit) {
@@ -831,34 +835,34 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
     // Print cache
     for (int way = 0; way < *Cacheset; way++) {
         printf("\n\n");
-        printf("###################### %d-way ######################\n", way);
-        printf("##                  index table                  ##\n");
-        printf("## Valid ##    Tag    ## Shift register ## Dirty ##\n");
-
+        printf("########################## %d-set ##########################\n", way);
+        printf("##                      index table                      ##\n");
+        printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
         for (int index = 0; index < *Cachesize / CACHELINESIZE; index++) {
-                printf("##   %d   ## 0x%07x ##      ", Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
+                printf("##   %d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
                 for (int j = 2; j >= 0; j--) {
                     printf("%d", Cache[way].Cache[index][3][0] >> j & 1);
                 }
                 printf("       ##   %d   ##\n", Cache[way].Cache[index][4][0]);
         }
-        printf("###################################################\n");
-        printf("#######              data table             #######\n");
-        printf("#######    Tag    ##          Data          #######\n");
+        printf("###########################################################\n");
+        printf("#######                 data table                  #######\n");
+        printf("####### Index ##   Tag    ##          Data          #######\n");
         for (int index = 0; index < *Cachesize / CACHELINESIZE; index++) {
-            printf("####### 0x%07x ## ", Cache[way].Cache[index][1][0]);
+            printf("#######   %d   ## 0x%06x ## ", index, Cache[way].Cache[index][1][0]);
             for (int data = 0; data < 64; data += 4) {
                 printf("  0x%02x : 0x%02x%02x%02x%02x    #######\n", data, Cache[way].Cache[index][2][data], Cache[way].Cache[index][2][data + 1],
                                             Cache[way].Cache[index][2][data + 2], Cache[way].Cache[index][2][data + 3]);
                 if (data == 60) {
-                    printf("###################################################\n");
+                    printf("###########################################################\n");
+
                 } else {
-                    printf("#######           ## ");
+                    printf("#######                   ## ");
                 }
             }
         }
     }
-    printf("###################################################\n");
+    printf("###########################################################\n");
 
 
     // Print executed file name
@@ -928,18 +932,55 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
             break;
     }
     printf("\n");
+    switch (*Cacheset) {
+        case 1 :
+            printf("Cache set : Direct-mapped\n");
+            break;
+
+        case 2 :
+            printf("Cache set : 2-way\n");
+            break;
+
+        case 4 :
+            printf("Cache set : 4-way\n");
+            break;
+    }
+    switch (*Cachesize) {
+        case 256 :
+            printf("Cache size : 256 bytes\n");
+            break;
+
+        case 512 :
+            printf("Cache size : 512 bytes\n");
+            break;
+
+        case 1024 :
+            printf("Cache size : 1024 bytes\n");
+            break;
+    }
+    printf("$line per set : %d\n", *Cachesize / *Cacheset / CACHELINESIZE);
+    switch (*Cachewrite) {
+        case 1 :
+            printf("Cache write policy : Write-through\n");
+            break;
+
+        case 2 :
+            printf("Cache write policy : Write-back\n");
+            break;
+    }
+    printf("\n");
     printf("Final return value R[2] = %d\n", R[2]);
     printf("# of clock cycles : %d\n", counting.cycle);
     printf("# of register operations : %d\n", counting.RegOpcount);
     printf("# of taken branches : %d\n", counting.takenBranch);
     printf("# of not taken branches : %d\n", counting.nottakenBranch);
-    printf("# of total branches : %d", counting.takenBranch + counting.nottakenBranch);
+    printf("# of total branches : %d\n", counting.takenBranch + counting.nottakenBranch);
     printf("# of branch prediction HIT : %d\n", counting.PredictHitCount);
     printf("HIT rate of branch prediction : %.2lf %%\n", BranchHITrate);
     printf("# of stalling : %d\n", counting.stall);
     printf("# of memory operation instructions : %d\n", counting.Memcount);
     printf("# of cache HIT : %d\n", counting.cacheHITcount);
-    printf("# of cache MISS : %d\n", counting.coldMISScount + counting.conflictMISScount);
+    printf("# of cache MISS : cold %d, conflict %d, total %d\n", counting.coldMISScount, counting.conflictMISScount, counting.coldMISScount + counting.conflictMISScount);
     printf("HIT rate of cache access : %.2lf %%\n", CacheHITrate);
     return;
 }

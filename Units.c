@@ -1046,16 +1046,17 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                 }
 
                 // Cache MISS
-                debugmem[1].CacheHIT = 1;
+                debugmem[1].CacheHIT = 0;
                 if (invalidCount == *Cacheset) {  // $lines of all set indexes are invalid, Cache cold MISS
                     counting.coldMISScount++;
+                    debugmem[1].ColdorConflictMISS = 0;
                 } else if (Cache->way == *Cacheset) {  // Cache conflict MISS
                     counting.conflictMISScount++;
+                    debugmem[1].ColdorConflictMISS = 1;
                 }
 
                 // Allocate cache
                 AllocateCache(Addr, Cacheset, Cachesize);
-                UpdateLRU(Cache->way, Cacheset);
                 Cache[Cache->way].Cache[Cache->index][4][0] = 1;  // Set dirty bit to 1
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
@@ -1072,70 +1073,74 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
     }
 }
 void AllocateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
+    int way;
     counting.cycle += 999;
     debugmem[1].replaceCache = 0;
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     debugmem[1].CachenowAddr = memCacheIndex;
-    for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {  // Find all $set
-        if (Cache[Cache->way].Cache[Cache->index][0][0] == 0) {  // $line is invalid
-            Cache[Cache->way].Cache[Cache->index][0][0] = 1;  // Set $line to valid
-            Cache[Cache->way].Cache[Cache->index][1][0] = Cache->tag;
-            for (Cache->offset = 0; Cache->offset < CACHELINESIZE; Cache->offset += 4) {
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Memory[memCacheIndex / 4] & 0xff000000) >> 24;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Memory[memCacheIndex / 4] & 0x00ff0000) >> 16;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Memory[memCacheIndex / 4] & 0x0000ff00) >> 8;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 3] = Memory[memCacheIndex / 4] & 0x000000ff;
+    for (way = 0; way < *Cacheset; way++) {  // Find all $set
+        if (Cache[way].Cache[Cache->index][0][0] == 0) {  // $line is invalid
+            Cache[way].Cache[Cache->index][0][0] = 1;  // Set $line to valid
+            Cache[way].Cache[Cache->index][1][0] = Cache->tag;
+            for (int offset = 0; offset < CACHELINESIZE; offset += 4) {
+                Cache[way].Cache[Cache->index][2][offset] = (Memory[memCacheIndex / 4] & 0xff000000) >> 24;
+                Cache[way].Cache[Cache->index][2][offset + 1] = (Memory[memCacheIndex / 4] & 0x00ff0000) >> 16;
+                Cache[way].Cache[Cache->index][2][offset + 2] = (Memory[memCacheIndex / 4] & 0x0000ff00) >> 8;
+                Cache[way].Cache[Cache->index][2][offset + 3] = Memory[memCacheIndex / 4] & 0x000000ff;
                 memCacheIndex += 4;
             }
+            Cache->way = way;
             return;
         }
     }
-    if (Cache->way == *Cacheset) {  // All $lines are valid (= have to replace oldest one)
+    if (way == *Cacheset) {  // All $lines are valid (= have to replace oldest one)
         ReplaceCache(Addr, Cacheset, Cachesize);
         debugmem[1].replaceCache = 1;
     }
     return;
 }
 void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
+    int way;
     debugmem[1].replaceCache = 0;
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     debugmem[1].CachenowAddr = memCacheIndex;
-    for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {  // Find all $set
-        if (Cache[Cache->way].Cache[Cache->index][0][0] == 0) {  // $line is invalid
-            Cache[Cache->way].Cache[Cache->index][0][0] = 1;  // Set $line to valid
-            Cache[Cache->way].Cache[Cache->index][1][0] = Cache->tag;
-            for (Cache->offset = 0; Cache->offset < CACHELINESIZE; Cache->offset += 4) {
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Memory[memCacheIndex / 4] & 0xff000000) >> 24;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Memory[memCacheIndex / 4] & 0x00ff0000) >> 16;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Memory[memCacheIndex / 4] & 0x0000ff00) >> 8;
-                Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 3] = Memory[memCacheIndex / 4] & 0x000000ff;
+    for (way = 0; way < *Cacheset; way++) {  // Find all $set
+        if (Cache[way].Cache[Cache->index][0][0] == 0) {  // $line is invalid
+            Cache[way].Cache[Cache->index][0][0] = 1;  // Set $line to valid
+            Cache[way].Cache[Cache->index][1][0] = Cache->tag;
+            for (int offset = 0; offset < CACHELINESIZE; offset += 4) {
+                Cache[way].Cache[Cache->index][2][offset] = (Memory[memCacheIndex / 4] & 0xff000000) >> 24;
+                Cache[way].Cache[Cache->index][2][offset + 1] = (Memory[memCacheIndex / 4] & 0x00ff0000) >> 16;
+                Cache[way].Cache[Cache->index][2][offset + 2] = (Memory[memCacheIndex / 4] & 0x0000ff00) >> 8;
+                Cache[way].Cache[Cache->index][2][offset + 3] = Memory[memCacheIndex / 4] & 0x000000ff;
                 memCacheIndex += 4;
             }
+            Cache->way = way;
             return;
         }
     }
-    if (Cache->way == *Cacheset) {  // All $lines are valid (= have to replace oldest one)
+    if (way == *Cacheset) {  // All $lines are valid (= have to replace oldest one)
         debugmem[1].replaceCache = 1;
         ReplaceCache(Addr, Cacheset, Cachesize);
     }
     return;
 }
 void UpdateLRU(uint8_t hitway, const int* Cacheset) {
-    for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {  // Find all $set
+    for (int way = 0; way < *Cacheset; way++) {  // Find all $set
         // Saving value to shift array
-        Cache[Cache->way].Shiftreg[1] = (Cache[Cache->way].Cache[Cache->index][3][0] & 0x3) >> 1;
-        Cache[Cache->way].Shiftreg[0] = (Cache[Cache->way].Cache[Cache->index][3][0] & 0x1);
+        Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x3) >> 1;
+        Cache[way].Shiftreg[0] = (Cache[way].Cache[Cache->index][3][0] & 0x1);
         // Shifting left
-        Cache[Cache->way].Shiftreg[2] = Cache[Cache->way].Shiftreg[1];
-        Cache[Cache->way].Shiftreg[1] = Cache[Cache->way].Shiftreg[0];
-        if (Cache->way == hitway) {  // Update shift register to 1 for HIT set
-            Cache[Cache->way].Shiftreg[0] = 1;
+        Cache[way].Shiftreg[2] = Cache[way].Shiftreg[1];
+        Cache[way].Shiftreg[1] = Cache[way].Shiftreg[0];
+        if (way == hitway) {  // Update shift register to 1 for HIT set
+            Cache[way].Shiftreg[0] = 1;
         } else {
-            Cache[Cache->way].Shiftreg[0] = 0;
+            Cache[way].Shiftreg[0] = 0;
         }
         // Saving shifted value to Cache
-        Cache[Cache->way].Cache[Cache->index][3][0] = Cache[Cache->way].Shiftreg[2] + 2 * Cache[Cache->way].Shiftreg[1]
-                                                      + 4 * Cache[Cache->way].Shiftreg[0];
+        Cache[way].Cache[Cache->index][3][0] = Cache[way].Shiftreg[2] + 2 * Cache[way].Shiftreg[1]
+                                                      + 4 * Cache[way].Shiftreg[0];
     }
     return;
 }
@@ -1145,17 +1150,17 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
     uint8_t old = 0;
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     // Saving value to shift array & compare array
-    for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {
-        Cache[Cache->way].Shiftreg[2] = Cache[Cache->way].Cache[Cache->index][3][0] >> 2;
-        Cache[Cache->way].Shiftreg[1] = (Cache[Cache->way].Cache[Cache->index][3][0] & 0x3) >> 1;
-        Cache[Cache->way].Shiftreg[0] = (Cache[Cache->way].Cache[Cache->index][3][0] & 0x1);
-        compare[Cache->way] = Cache[Cache->way].Shiftreg[2] + 2 * Cache[Cache->way].Shiftreg[1]
-                              + 4 * Cache[Cache->way].Shiftreg[0];
+    for (int way = 0; way < *Cacheset; way++) {
+        Cache[way].Shiftreg[2] = Cache[way].Cache[Cache->index][3][0] >> 2;
+        Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x3) >> 1;
+        Cache[way].Shiftreg[0] = (Cache[way].Cache[Cache->index][3][0] & 0x1);
+        compare[way] = Cache[way].Shiftreg[2] + 2 * Cache[way].Shiftreg[1]
+                              + 4 * Cache[way].Shiftreg[0];
     }
     // Compare shift register value (= Find oldest set)
-    for (Cache->way = 1; Cache->way < *Cacheset; Cache->way++) {
-        if (compare[Cache->way] < compare[old]) {
-            old = Cache->way;
+    for (int way = 1; way < *Cacheset; way++) {
+        if (compare[way] < compare[old]) {
+            old = way;
         }
     }
     // Replace oldest set's data to new data
@@ -1213,22 +1218,22 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
         }
         debugmem[1].CacheoldAddr = memAddr;
         // Send $line to memory
-        for (Cache->offset = 0; Cache->offset < CACHELINESIZE; Cache->offset += 4) {
-            sendMem = (Cache[old].Cache[Cache->index][2][Cache->offset] & 0xff000000) >> 24;
-            sendMem = sendMem | (Cache[old].Cache[Cache->index][2][Cache->offset + 1] & 0x00ff0000) >> 16;
-            sendMem = sendMem | (Cache[old].Cache[Cache->index][2][Cache->offset + 2] & 0x0000ff00) >> 8;
-            sendMem = sendMem | Cache[old].Cache[Cache->index][2][Cache->offset + 3] & 0x000000ff;
+        for (int offset = 0; offset < CACHELINESIZE; offset += 4) {
+            sendMem = (Cache[old].Cache[Cache->index][2][offset] & 0xff000000) >> 24;
+            sendMem = sendMem | (Cache[old].Cache[Cache->index][2][offset + 1] & 0x00ff0000) >> 16;
+            sendMem = sendMem | (Cache[old].Cache[Cache->index][2][offset + 2] & 0x0000ff00) >> 8;
+            sendMem = sendMem | Cache[old].Cache[Cache->index][2][offset + 3] & 0x000000ff;
             Memory[memAddr / 4] = sendMem;
             memAddr += 4;
         }
     }
     Cache[old].Cache[Cache->index][1][0] = Cache->tag;
     Cache[old].Cache[Cache->index][3][0] = 0;
-    for (Cache->offset = 0; Cache->offset < CACHELINESIZE; Cache->offset += 4) {
-        Cache[old].Cache[Cache->index][2][Cache->offset] = (Memory[memCacheIndex / 4] & 0xff000000) >> 24;
-        Cache[old].Cache[Cache->index][2][Cache->offset + 1] = (Memory[memCacheIndex / 4] & 0x00ff0000) >> 16;
-        Cache[old].Cache[Cache->index][2][Cache->offset + 2] = (Memory[memCacheIndex / 4] & 0x0000ff00) >> 8;
-        Cache[old].Cache[Cache->index][2][Cache->offset + 3] = Memory[memCacheIndex / 4] & 0x000000ff;
+    for (int offset = 0; offset < CACHELINESIZE; offset += 4) {
+        Cache[old].Cache[Cache->index][2][offset] = (Memory[memCacheIndex / 4] & 0xff000000) >> 24;
+        Cache[old].Cache[Cache->index][2][offset + 1] = (Memory[memCacheIndex / 4] & 0x00ff0000) >> 16;
+        Cache[old].Cache[Cache->index][2][offset + 2] = (Memory[memCacheIndex / 4] & 0x0000ff00) >> 8;
+        Cache[old].Cache[Cache->index][2][offset + 3] = Memory[memCacheIndex / 4] & 0x000000ff;
         memCacheIndex += 4;
     }
     Cache->way = old;
