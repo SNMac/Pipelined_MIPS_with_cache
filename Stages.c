@@ -823,7 +823,7 @@ void EX(void) {
 }
 
 // Memory Access
-void MEM(const int* Cacheset, const int* Cachesize) {
+void MEM(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
     memwb[0].valid = exmem[1].valid;
     debugwb[0].valid = exmem[1].valid;
     if (!(exmem[1].valid)) {
@@ -835,7 +835,7 @@ void MEM(const int* Cacheset, const int* Cachesize) {
 
     // Cache access
     uint32_t Readdata = AccessCache(exmem[1].ALUresult, MemWriteDataMUX, Cacheset, Cachesize,
-                                   exmem[1].MemRead, exmem[1].MemWrite);
+                                   Cachewrite, exmem[1].MemRead, exmem[1].MemWrite);
 
     // Save data to pipeline
     memwb[0].PCadd8 = exmem[1].PCadd8; memwb[0].ALUresult = exmem[1].ALUresult;
@@ -849,6 +849,7 @@ void MEM(const int* Cacheset, const int* Cachesize) {
     // For visible state
     debugmem[1].MemRead = exmem[1].MemRead; debugmem[1].MemWrite = exmem[1].MemWrite;
     debugmem[1].Addr = exmem[1].ALUresult; debugmem[1].Writedata = MemWriteDataMUX;
+    debugmem[1].Readdata = Readdata;
     return;
 }
 

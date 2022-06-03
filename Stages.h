@@ -21,7 +21,7 @@ void AlwaysnotTakenID(void);  // Instruction Decode (Always not taken predictor)
 void BTFNTIF(void);  // Instruction Fetch (Backward Taken, Forward Not Taken predictor)
 void BTFNTID(void);  // Instruction Decode (Backward Taken, Forward Not Taken predictor)
 void EX(void);  // EXecute
-void MEM(const int* Cacheset, const int* Cachesize);  // MEMory access
+void MEM(const int* Cacheset, const int* Cachesize, const int* Cachewrite);  // MEMory access
 void WB(void);  // Write Back
 
 // make GHR index (2^GHRs)

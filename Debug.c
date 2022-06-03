@@ -23,11 +23,13 @@ extern IFID ifid[2];
 extern IDEX idex[2];
 extern EXMEM exmem[2];
 extern MEMWB memwb[2];
-extern BRANCH_PREDICT BranchPred;
 extern FORWARD_SIGNAL fwrdSig;
 extern ID_FORWARD_SIGNAL idfwrdSig;
 extern MEM_FORWARD_SIGNAL memfwrdSig;
 extern HAZARD_DETECTION_SIGNAL hzrddetectSig;
+extern BRANCH_PREDICT BranchPred;
+extern CACHE Cache[4];
+
 
 void printIF(int Predictor) {
     printf("\n<<<<<<<<<<<<<<<<<<<<<IF>>>>>>>>>>>>>>>>>>>>>\n");
@@ -219,7 +221,7 @@ void printEX(void) {
     return;
 }
 
-void printMEM(const int* Cacheset, const int* Cachesize) {
+void printMEM(const int* Cachewrite) {
     debugwb[0].ControlNOP = debugmem[1].ControlNOP;
     printf("\n<<<<<<<<<<<<<<<<<<<<<MEM>>>>>>>>>>>>>>>>>>>>>\n");
     if (!(debugmem[1].valid)) {
@@ -242,13 +244,107 @@ void printMEM(const int* Cacheset, const int* Cachesize) {
         printf("<Memory Write Data forwarded from MEM/WB pipeline>\n");
     }
 
-    if (debugmem[1].MemRead) {
-        printf("Memory[0x%08x] load -> 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
-    }
-    else if (debugmem[1].MemWrite) {
-        printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
-    }
-    else {
+    if (debugmem[1].MemRead) {  // lw
+        if (debugmem[1].CacheHIT) {
+            printf("<Cache HIT>\n");
+            printf("%d-way Cache[0x%x][0x%x][%d] load -> 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                                                                        debugmem[1].Readdata, debugmem[1].Readdata);
+        } else {
+            if (debugmem[1].ColdorConflictMISS) {
+                printf("<Cache conflict MISS, Updating cache>\n");
+            } else {
+                printf("<Cache Cold MISS, Updating cache>\n");
+            }
+            printf("Memory[0x%08x] load -> 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Readdata, debugmem[1].Readdata);
+
+            if (debugmem[1].replaceCache) {
+                printf("Replace Least Recently Used data to new data.\n");
+                if (debugmem[1].dirtyline) {
+                    printf("Memory coherence hazard occured.\n");
+                    printf("Update memory to cache data.\n");
+                    printf("%d-way Cache[0x%x][0x%x][0 ~ 63] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CacheoldAddr);
+                }
+            }
+            printf("%d-way Cache[0x%x][0x%x][0 ~ 63] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
+        }
+    } else if (debugmem[1].MemWrite) {  // sw
+        if (debugmem[1].CacheHIT) {
+            printf("<Cache HIT>\n");
+            switch (*Cachewrite) {
+                case 1 :
+                    // Write-through policy
+                    // No write allocate
+                    printf("%d-way Cache[0x%x][0x%x][%d] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                           debugmem[1].Writedata, debugmem[1].Writedata);
+                    printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
+                    break;
+
+                case 2 :
+                    // Write-back policy
+                    // Write allocate
+                    printf("%d-way Cache[0x%x][0x%x][%d] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                           debugmem[1].Writedata, debugmem[1].Writedata);
+                    break;
+            }
+        }
+        else {
+            if (debugmem[1].ColdorConflictMISS) {
+                switch (*Cachewrite) {
+                    case 1 :
+                        // Write-through policy
+                        // No write allocate
+                        printf("<Cache conflict MISS>\n");
+                        printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
+                        break;
+
+                    case 2 :
+                        // Write-back policy
+                        // Write allocate
+                        printf("<Cache conflict MISS, Updating cache>\n");
+                        if (debugmem[1].replaceCache) {
+                            printf("Replace Least Recently Used data to new data.\n");
+                            if (debugmem[1].dirtyline) {
+                                printf("Memory coherence hazard occured.\n");
+                                printf("Update memory to cache data.\n");
+                                printf("%d-way Cache[0x%x][0x%x][0 ~ 63] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CacheoldAddr);
+                            }
+                            printf("%d-way Cache[0x%x][0x%x][0 ~ 63] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
+                        }
+                        printf("%d-way Cache[0x%x][0x%x][%d] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                                                                                    debugmem[1].Writedata, debugmem[1].Writedata);
+                        break;
+                }
+            }
+            else {
+                switch (*Cachewrite) {
+                    case 1 :
+                        // Write-through policy
+                        // No write allocate
+                        printf("<Cache cold MISS>\n");
+                        printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
+                        break;
+
+                    case 2 :
+                        // Write-back policy
+                        // Write allocate
+                        printf("<Cache cold MISS, Updating cache>\n");
+                        if (debugmem[1].replaceCache) {
+                            printf("Replace Least Recently Used data to new data.\n");
+                            if (debugmem[1].dirtyline) {
+                                printf("Memory coherence hazard occured.\n");
+                                printf("Update memory to cache data.\n");
+                                printf("%d-way Cache[0x%x][0x%x][0 ~ 63] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CacheoldAddr);
+                            }
+                            printf("%d-way Cache[0x%x][0x%x][0 ~ 63] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
+                        }
+                        printf("%d-way Cache[0x%x][0x%x][%d] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
+                                                                                    debugmem[1].Writedata, debugmem[1].Writedata);
+                        break;
+                }
+
+            }
+        }
+    } else {
         printf("There is no memory access\n");
     }
     printf("**********************************************\n");
