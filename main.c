@@ -372,8 +372,8 @@ int CacheWriteSelect(void) {
 // Cache setting
 void CacheSetting(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
-        Cache[way].Cache = (uint32_t***)calloc((*Cachesize / CACHELINESIZE), sizeof(uint32_t**));
-        for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
+        Cache[way].Cache = (uint32_t***)calloc((*Cachesize / *Cacheset / CACHELINESIZE), sizeof(uint32_t**));
+        for (int i = 0; i < (*Cachesize / *Cacheset / CACHELINESIZE); i++) {
             Cache[way].Cache[i] = (uint32_t**)calloc(5, sizeof(uint32_t*));
             for (int j = 0; j < 5; j++) {
                 Cache[way].Cache[i][j] = (uint32_t*)calloc(64, sizeof(uint32_t));
@@ -385,7 +385,7 @@ void CacheSetting(const int* Cacheset, const int* Cachesize) {
 // Free malloc cache
 void FreeCache(const int* Cacheset, const int* Cachesize) {
     for (int way = 0; way < *Cacheset; way++) {
-        for (int i = 0; i < (*Cachesize / CACHELINESIZE); i++) {
+        for (int i = 0; i < (*Cachesize / *Cacheset / CACHELINESIZE); i++) {
             for (int j = 0; j < 5; j++) {
                 free(Cache[way].Cache[i][j]);
             }
@@ -838,16 +838,16 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
         printf("########################## %d-set ##########################\n", way);
         printf("##                      index table                      ##\n");
         printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
-        for (int index = 0; index < *Cachesize / CACHELINESIZE; index++) {
-                printf("##   %d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
+        for (int index = 0; index < *Cachesize / *Cacheset / CACHELINESIZE; index++) {
+                printf("##  %2d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
                 printf("%d%d%d", (Cache[way].Cache[index][3][0] & 0x4) >> 2, (Cache[way].Cache[index][3][0] & 0x2) >> 1, Cache[way].Cache[index][3][0] & 0x1);
                 printf("       ##   %d   ##\n", Cache[way].Cache[index][4][0]);
         }
         printf("###########################################################\n");
         printf("#######                 data table                  #######\n");
         printf("####### Index ##   Tag    ##          Data          #######\n");
-        for (int index = 0; index < *Cachesize / CACHELINESIZE; index++) {
-            printf("#######   %d   ## 0x%06x ## ", index, Cache[way].Cache[index][1][0]);
+        for (int index = 0; index < *Cachesize / *Cacheset / CACHELINESIZE; index++) {
+            printf("#######  %2d   ## 0x%06x ## ", index, Cache[way].Cache[index][1][0]);
             for (int data = 0; data < 64; data += 4) {
                 printf("  0x%02x : 0x%02x%02x%02x%02x    #######\n", data, Cache[way].Cache[index][2][data], Cache[way].Cache[index][2][data + 1],
                                             Cache[way].Cache[index][2][data + 2], Cache[way].Cache[index][2][data + 3]);

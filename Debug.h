@@ -51,7 +51,6 @@ typedef struct _DEBUGMEM {
     uint32_t CacheoldAddr;
     uint32_t CachenowAddr;
     uint32_t replaceTag;
-    uint8_t shiftReg;
     uint32_t Writedata;
     uint32_t Readdata;
     char instprint[100];
