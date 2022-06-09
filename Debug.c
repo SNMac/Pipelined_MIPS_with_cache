@@ -250,10 +250,22 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
             printf("<Cache HIT>\n");
             printf("%d-set Cache[%d][0x%06x][0x%02x] load -> 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                         debugmem[1].Readdata, debugmem[1].Readdata);
-            for (int way = 0; way < *Cacheset; way++) {
-                printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
-                       way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+            switch (*Cacheset) {
+                case 2 :  // 2-way
+                    for (int way = 0; way < *Cacheset; way++) {
+                        printf("<Update %d-set Cache[%d]'s shift register to %d%d>\n",
+                               way, Cache->index, Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    }
+                    break;
+
+                case 4 :  // 4-way
+                    for (int way = 0; way < *Cacheset; way++) {
+                        printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                               way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    }
+                    break;
             }
+
         } else {
             if (debugmem[1].ColdorConflictMISS) {
                 printf("<Cache conflict MISS, Updating cache>\n");
@@ -271,9 +283,20 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                 }
             }
             printf("%d-set Cache[%d][0x%06x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
-            for (int way = 0; way < *Cacheset; way++) {
-                printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
-                       way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+            switch (*Cacheset) {
+                case 2 :  // 2-way
+                    for (int way = 0; way < *Cacheset; way++) {
+                        printf("<Update %d-set Cache[%d]'s shift register to %d%d>\n",
+                               way, Cache->index, Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    }
+                    break;
+
+                case 4 :  // 4-way
+                    for (int way = 0; way < *Cacheset; way++) {
+                        printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                               way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    }
+                    break;
             }
         }
     } else if (debugmem[1].MemWrite) {  // sw
@@ -287,9 +310,20 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                     printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                 debugmem[1].Writedata, debugmem[1].Writedata);
                     printf("Memory[0x%08x] <- store 0x%x (%d)\n", debugmem[1].Addr, debugmem[1].Writedata, debugmem[1].Writedata);
-                    for (int way = 0; way < *Cacheset; way++) {
-                        printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
-                               way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    switch (*Cacheset) {
+                        case 2 :  // 2-way
+                            for (int way = 0; way < *Cacheset; way++) {
+                                printf("<Update %d-set Cache[%d]'s shift register to %d%d>\n",
+                                       way, Cache->index, Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                            }
+                            break;
+
+                        case 4 :  // 4-way
+                            for (int way = 0; way < *Cacheset; way++) {
+                                printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                                       way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                            }
+                            break;
                     }
                     break;
 
@@ -298,9 +332,20 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                     // Write allocate
                     printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                 debugmem[1].Writedata, debugmem[1].Writedata);
-                    for (int way = 0; way < *Cacheset; way++) {
-                        printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
-                               way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                    switch (*Cacheset) {
+                        case 2 :  // 2-way
+                            for (int way = 0; way < *Cacheset; way++) {
+                                printf("<Update %d-set Cache[%d]'s shift register to %d%d>\n",
+                                       way, Cache->index, Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                            }
+                            break;
+
+                        case 4 :  // 4-way
+                            for (int way = 0; way < *Cacheset; way++) {
+                                printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                                       way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                            }
+                            break;
                     }
                     break;
             }
@@ -329,9 +374,20 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                         printf("%d-set Cache[%d][0x%06x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
                         printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                     debugmem[1].Writedata, debugmem[1].Writedata);
-                        for (int way = 0; way < *Cacheset; way++) {
-                            printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
-                                   way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                        switch (*Cacheset) {
+                            case 2 :  // 2-way
+                                for (int way = 0; way < *Cacheset; way++) {
+                                    printf("<Update %d-set Cache[%d]'s shift register to %d%d>\n",
+                                           way, Cache->index, Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                                }
+                                break;
+
+                            case 4 :  // 4-way
+                                for (int way = 0; way < *Cacheset; way++) {
+                                    printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                                           way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                                }
+                                break;
                         }
                         break;
                 }
@@ -359,9 +415,20 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                         printf("%d-set Cache[%d][0x%06x][00 ~ 3f] <- Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, Cache->tag, debugmem[1].CachenowAddr);
                         printf("%d-set Cache[%d][0x%06x][0x%02x] store <- 0x%x (%d)\n", Cache->way, Cache->index, Cache->tag, Cache->offset,
                                                                                     debugmem[1].Writedata, debugmem[1].Writedata);
-                        for (int way = 0; way < *Cacheset; way++) {
-                            printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
-                                   way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                        switch (*Cacheset) {
+                            case 2 :  // 2-way
+                                for (int way = 0; way < *Cacheset; way++) {
+                                    printf("<Update %d-set Cache[%d]'s shift register to %d%d>\n",
+                                           way, Cache->index, Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                                }
+                                break;
+
+                            case 4 :  // 4-way
+                                for (int way = 0; way < *Cacheset; way++) {
+                                    printf("<Update %d-set Cache[%d]'s shift register to %d%d%d>\n",
+                                           way, Cache->index, Cache[way].Shiftreg[2], Cache[way].Shiftreg[1], Cache[way].Shiftreg[0]);
+                                }
+                                break;
                         }
                         break;
                 }

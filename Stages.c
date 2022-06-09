@@ -249,7 +249,6 @@ void GshareID(const int* Predictbit, const char* Counter) {
         GshareUpdateBranchBuffer(Branch, PCBranch, BranchAddr, Predictbit, Counter);
     }
 
-
     // Select PC address
     bool PCtarget = BranchPred.AddressHit[0] & BranchPred.Predict[0];
     bool BranchHit = !(BranchPred.Predict[1] ^ PCBranch);

@@ -798,7 +798,6 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
             }
             printf("########################################################\n");
             break;
-            break;
 
         case '4' :
             // Print BTB
@@ -809,7 +808,6 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
                 printf("## 0x%08x ##    0x%08x    ## %16d ##\n", BranchPred.BTB[i][0], BranchPred.BTB[i][1], BranchPred.BTB[i][2]);
             }
             printf("########################################################\n");
-            break;
             break;
 
         case '5' :
@@ -839,8 +837,21 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
         printf("##                      index table                      ##\n");
         printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
         for (int index = 0; index < *Cachesize / *Cacheset / CACHELINESIZE; index++) {
-                printf("##  %2d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
-                printf("%d%d%d", (Cache[way].Cache[index][3][0] & 0x4) >> 2, (Cache[way].Cache[index][3][0] & 0x2) >> 1, Cache[way].Cache[index][3][0] & 0x1);
+                switch (*Cacheset) {
+                    case 1 :  // Direct-mapped
+                        printf("##  %2d   ##   %d   ## 0x%06x ##         ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
+                        break;
+
+                    case 2 :  // 2-way
+                        printf("##  %2d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
+                        printf(" %d%d", (Cache[way].Cache[index][3][0] & 0x2) >> 1, Cache[way].Cache[index][3][0] & 0x1);
+                        break;
+
+                    case 4 :  // 4-way
+                        printf("##  %2d   ##   %d   ## 0x%06x ##      ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
+                        printf("%d%d%d", (Cache[way].Cache[index][3][0] & 0x4) >> 2, (Cache[way].Cache[index][3][0] & 0x2) >> 1, Cache[way].Cache[index][3][0] & 0x1);
+                        break;
+                }
                 printf("       ##   %d   ##\n", Cache[way].Cache[index][4][0]);
         }
         printf("###########################################################\n");

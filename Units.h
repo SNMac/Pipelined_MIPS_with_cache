@@ -75,11 +75,10 @@ typedef struct _MEMWB {  // MEM/WB pipeline
 /* Control signals */
 typedef struct _CONTROL_SIGNAL {  // Control signals
     bool ALUSrc, RegWrite, MemRead, MemWrite, SignZero, BEQ, BNE,
-        Shift, IFFlush, Jump[2], RegDst[2], MemtoReg[2];
+        Shift, IFFlush, Jump[2], RegDst[2], MemtoReg[2], ArthOvfl;;
     char ALUOp;
 }CONTROL_SIGNAL;
 typedef struct _ALU_CONTROL_SIGNAL {  // ALU control signals
-    bool ArthOvfl;
     char ALUSig;
 }ALU_CONTROL_SIGNAL;
 typedef struct _FORWARD_SIGNAL {  // Forward unit signals
@@ -174,7 +173,6 @@ void BTFNTBranchBufferWrite(uint32_t WritePC, uint32_t Address);  // Write Branc
 uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, const int* Cachesize,
                      const int* Cachewrite, bool MemRead, bool MemWrite);  // Accessing cache
 void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);  // Updating cache
-void AllocateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);  // Allocating cache (Write-back policy)
 void UpdateLRU(uint8_t hitway, const int* Cacheset);  // Update shift register
 void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);  // Check shift register
 
