@@ -1406,6 +1406,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             ctrlSig.BEQ = 0;
             ctrlSig.ALUOp = '+';
             ctrlSig.Jump[1] = 0; ctrlSig.Jump[0] = 0;
+            ctrlSig.ArthOvfl = 1;
             break;
 
         case 0x9 :  // addiu
