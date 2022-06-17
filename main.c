@@ -833,7 +833,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
     // Print cache
     for (int way = 0; way < *Cacheset; way++) {
         printf("\n\n");
-        printf("########################## %d-set ##########################\n", way);
+        printf("########################## %d-way ##########################\n", way);
         printf("##                      index table                      ##\n");
         printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
         for (int index = 0; index < *Cachesize / *Cacheset / CACHELINESIZE; index++) {
