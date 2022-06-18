@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
             }
         }
         CacheSize = CacheSizeSelect();
-        CacheSet = CacheSetSelect();
+        CacheSet = CacheWaySelect();
         CacheWrite = CacheWriteSelect();
         CacheSetting(&CacheSet, &CacheSize);
 
@@ -317,7 +317,7 @@ int CacheSizeSelect(void) {
 }
 
 // Cache set-associativity select
-int CacheSetSelect(void) {
+int CacheWaySelect(void) {
     int retVal;
     printf("\n");
     printf("#######################################\n");
@@ -370,10 +370,10 @@ int CacheWriteSelect(void) {
 }
 
 // Cache setting
-void CacheSetting(const int* Cacheset, const int* Cachesize) {
-    for (int way = 0; way < *Cacheset; way++) {
-        Cache[way].Cache = (uint32_t***)calloc((*Cachesize / *Cacheset / CACHELINESIZE), sizeof(uint32_t**));
-        for (int i = 0; i < (*Cachesize / *Cacheset / CACHELINESIZE); i++) {
+void CacheSetting(const int* Cacheway, const int* Cachesize) {
+    for (int way = 0; way < *Cacheway; way++) {
+        Cache[way].Cache = (uint32_t***)calloc((*Cachesize / *Cacheway / CACHELINESIZE), sizeof(uint32_t**));
+        for (int i = 0; i < (*Cachesize / *Cacheway / CACHELINESIZE); i++) {
             Cache[way].Cache[i] = (uint32_t**)calloc(5, sizeof(uint32_t*));
             for (int j = 0; j < 5; j++) {
                 Cache[way].Cache[i][j] = (uint32_t*)calloc(64, sizeof(uint32_t));
@@ -383,9 +383,9 @@ void CacheSetting(const int* Cacheset, const int* Cachesize) {
 }
 
 // Free malloc cache
-void FreeCache(const int* Cacheset, const int* Cachesize) {
-    for (int way = 0; way < *Cacheset; way++) {
-        for (int i = 0; i < (*Cachesize / *Cacheset / CACHELINESIZE); i++) {
+void FreeCache(const int* Cacheway, const int* Cachesize) {
+    for (int way = 0; way < *Cacheway; way++) {
+        for (int i = 0; i < (*Cachesize / *Cacheway / CACHELINESIZE); i++) {
             for (int j = 0; j < 5; j++) {
                 free(Cache[way].Cache[i][j]);
             }
@@ -396,7 +396,7 @@ void FreeCache(const int* Cacheset, const int* Cachesize) {
 }
 
 // One-level predictor
-void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     while(1) {
         if (!(ifid[0].valid | idex[0].valid | exmem[0].valid | memwb[0].valid)) {
             return;
@@ -405,12 +405,12 @@ void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cach
         OnelevelIF(Predictbit);
         OnelevelID(Predictbit, Counter);
         EX();
-        MEM(Cacheset, Cachesize, Cachewrite);
+        MEM(Cacheway, Cachesize, Cachewrite);
         WB();
         printIF(1);
         printID(1, Predictbit, Counter);
         printEX();
-        printMEM(Cacheset, Cachewrite);
+        printMEM(Cacheway, Cachewrite);
         printWB();
         printnextPC();
 
@@ -423,7 +423,7 @@ void OnelevelPredict(const int* Predictbit, const char* Counter, const int* Cach
 }
 
 // Gshare predictor execute
-void GsharePredict(const int* Predictbit, const char* Counter, const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+void GsharePredict(const int* Predictbit, const char* Counter, const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     while(1) {
         if (!(ifid[0].valid | idex[0].valid | exmem[0].valid | memwb[0].valid)) {
             return;
@@ -431,12 +431,12 @@ void GsharePredict(const int* Predictbit, const char* Counter, const int* Caches
         GshareIF(Predictbit);
         GshareID(Predictbit, Counter);
         EX();
-        MEM(Cacheset, Cachesize, Cachewrite);
+        MEM(Cacheway, Cachesize, Cachewrite);
         WB();
         printIF(2);
         printID(2, Predictbit, Counter);
         printEX();
-        printMEM(Cacheset, Cachewrite);
+        printMEM(Cacheway, Cachewrite);
         printWB();
         printnextPC();
 
@@ -449,7 +449,7 @@ void GsharePredict(const int* Predictbit, const char* Counter, const int* Caches
 }
 
 // Local predictor execute
-void LocalPredict(const int* Predictbit, const char* Counter, const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+void LocalPredict(const int* Predictbit, const char* Counter, const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     while(1) {
         if (!(ifid[0].valid | idex[0].valid | exmem[0].valid | memwb[0].valid)) {
             return;
@@ -457,12 +457,12 @@ void LocalPredict(const int* Predictbit, const char* Counter, const int* Cachese
         LocalIF(Predictbit);
         LocalID(Predictbit, Counter);
         EX();
-        MEM(Cacheset, Cachesize, Cachewrite);
+        MEM(Cacheway, Cachesize, Cachewrite);
         WB();
         printIF(3);
         printID(3, Predictbit, Counter);
         printEX();
-        printMEM(Cacheset, Cachewrite);
+        printMEM(Cacheway, Cachewrite);
         printWB();
         printnextPC();
 
@@ -475,7 +475,7 @@ void LocalPredict(const int* Predictbit, const char* Counter, const int* Cachese
 }
 
 // Always taken predictor execute
-void AlwaysTaken(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+void AlwaysTaken(const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     while(1) {
         if (!(ifid[0].valid | idex[0].valid | exmem[0].valid | memwb[0].valid)) {
             return;
@@ -484,12 +484,12 @@ void AlwaysTaken(const int* Cacheset, const int* Cachesize, const int* Cachewrit
         AlwaysTakenIF();
         AlwaysTakenID();
         EX();
-        MEM(Cacheset, Cachesize, Cachewrite);
+        MEM(Cacheway, Cachesize, Cachewrite);
         WB();
         printIF(4);
         printID(4, 0, 0);
         printEX();
-        printMEM(Cacheset, Cachewrite);
+        printMEM(Cacheway, Cachewrite);
         printWB();
         printnextPC();
 
@@ -502,7 +502,7 @@ void AlwaysTaken(const int* Cacheset, const int* Cachesize, const int* Cachewrit
 }
 
 // Always not taken predictor execute
-void AlwaysnotTaken(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+void AlwaysnotTaken(const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     while(1) {
         if (!(ifid[0].valid | idex[0].valid | exmem[0].valid | memwb[0].valid)) {
             return;
@@ -511,12 +511,12 @@ void AlwaysnotTaken(const int* Cacheset, const int* Cachesize, const int* Cachew
         AlwaysnotTakenIF();
         AlwaysnotTakenID();
         EX();
-        MEM(Cacheset, Cachesize, Cachewrite);
+        MEM(Cacheway, Cachesize, Cachewrite);
         WB();
         printIF(5);
         printID(5, 0, 0);
         printEX();
-        printMEM(Cacheset, Cachewrite);
+        printMEM(Cacheway, Cachewrite);
         printWB();
         printnextPC();
 
@@ -528,7 +528,7 @@ void AlwaysnotTaken(const int* Cacheset, const int* Cachesize, const int* Cachew
     }
 }
 
-void BTFNT(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+void BTFNT(const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     while(1) {
         if (!(ifid[0].valid | idex[0].valid | exmem[0].valid | memwb[0].valid)) {
             return;
@@ -537,12 +537,12 @@ void BTFNT(const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
         BTFNTIF();
         BTFNTID();
         EX();
-        MEM(Cacheset, Cachesize, Cachewrite);
+        MEM(Cacheway, Cachesize, Cachewrite);
         WB();
         printIF(6);
         printID(6, 0, 0);
         printEX();
-        printMEM(Cacheset, Cachewrite);
+        printMEM(Cacheway, Cachewrite);
         printWB();
         printnextPC();
 
@@ -706,7 +706,7 @@ void BTFNTPipelineHandsOver(void) {
 }
 
 void printFinalresult(const char* Predictor, const int* Predictbit, const char* filename, const char* Counter,
-                      const int* Cacheset, const int* Cachesize, const int* Cachewrite) {
+                      const int* Cacheway, const int* Cachesize, const int* Cachewrite) {
     printf("\n\n");
     printf("===============================================================\n");
     printf("===============================================================\n");
@@ -831,13 +831,13 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
     }
 
     // Print cache
-    for (int way = 0; way < *Cacheset; way++) {
+    for (int way = 0; way < *Cacheway; way++) {
         printf("\n\n");
         printf("########################## %d-way ##########################\n", way);
         printf("##                      index table                      ##\n");
         printf("## Index ## Valid ##   Tag    ## Shift register ## Dirty ##\n");
-        for (int index = 0; index < *Cachesize / *Cacheset / CACHELINESIZE; index++) {
-                switch (*Cacheset) {
+        for (int index = 0; index < *Cachesize / *Cacheway / CACHELINESIZE; index++) {
+                switch (*Cacheway) {
                     case 1 :  // Direct-mapped
                         printf("##  %2d   ##   %d   ## 0x%06x ##         ", index, Cache[way].Cache[index][0][0], Cache[way].Cache[index][1][0]);
                         break;
@@ -857,7 +857,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
         printf("###########################################################\n");
         printf("#######                 data table                  #######\n");
         printf("####### Index ##   Tag    ##          Data          #######\n");
-        for (int index = 0; index < *Cachesize / *Cacheset / CACHELINESIZE; index++) {
+        for (int index = 0; index < *Cachesize / *Cacheway / CACHELINESIZE; index++) {
             printf("#######  %2d   ## 0x%06x ## ", index, Cache[way].Cache[index][1][0]);
             for (int data = 0; data < 64; data += 4) {
                 printf("  0x%02x : 0x%02x%02x%02x%02x    #######\n", data, Cache[way].Cache[index][2][data], Cache[way].Cache[index][2][data + 1],
@@ -941,7 +941,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
             break;
     }
     printf("\n");
-    switch (*Cacheset) {
+    switch (*Cacheway) {
         case 1 :
             printf("Cache set : Direct-mapped\n");
             break;
@@ -967,7 +967,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
             printf("Cache size : 1024 bytes\n");
             break;
     }
-    printf("$line per set : %d\n", *Cachesize / *Cacheset / CACHELINESIZE);
+    printf("$line per set : %d\n", *Cachesize / *Cacheway / CACHELINESIZE);
     switch (*Cachewrite) {
         case 1 :
             printf("Cache write policy : Write-through\n");

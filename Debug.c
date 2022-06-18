@@ -277,7 +277,7 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
             if (debugmem[1].replaceCache) {
                 printf("Replace Least Recently Used data to new data.\n");
                 if (debugmem[1].dirtyline) {
-                    printf("Memory coherence hazard occured.\n");
+                    printf("Memory inconsistency hazard occured.\n");
                     printf("Update memory to cache data.\n");
                     printf("%d-set Cache[%d][0x%06x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, debugmem[1].replaceTag, debugmem[1].CacheoldAddr);
                 }
@@ -366,7 +366,7 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                         if (debugmem[1].replaceCache) {
                             printf("Replace Least Recently Used data to new data.\n");
                             if (debugmem[1].dirtyline) {
-                                printf("Memory coherence hazard occured.\n");
+                                printf("Memory inconsistency hazard occured.\n");
                                 printf("Update memory to cache data.\n");
                                 printf("%d-set Cache[%d][0x%06x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, debugmem[1].replaceTag, debugmem[1].CacheoldAddr);
                             }
@@ -407,7 +407,7 @@ void printMEM(const int* Cacheset, const int* Cachewrite) {
                         if (debugmem[1].replaceCache) {
                             printf("Replace Least Recently Used data to new data.\n");
                             if (debugmem[1].dirtyline) {
-                                printf("Cache coherence hazard occured.\n");
+                                printf("Memory inconsistency hazard occured.\n");
                                 printf("Update memory to cache data.\n");
                                 printf("%d-set Cache[%d][0x%06x][00 ~ 3f] -> Memory[0x%08x ~ ff]\n", Cache->way, Cache->index, debugmem[1].replaceTag, debugmem[1].CacheoldAddr);
                             }

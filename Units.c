@@ -903,12 +903,12 @@ void BTFNTBranchBufferWrite(uint32_t WritePC, uint32_t Address) {
 }
 
 // [Cache memory]
-uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, const int* Cachesize,
+uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheway, const int* Cachesize,
                      const int* Cachewrite, bool MemRead, bool MemWrite) {
     // Set cache access values
     int invalidCount = 0;
     Cache->offset = Addr & 0x0000003f;
-    switch (*Cacheset) {
+    switch (*Cacheway) {
         case 1 :  // Direct-mapped
             if (*Cachesize == 256) {  // 256 bytes, 4 $line per way
                 Cache->index = (Addr & 0x000000c0) >> 6;
@@ -949,7 +949,7 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
             break;
 
         default :
-            fprintf(stderr, "ERROR: AccessCache) const int* Cacheset is wrong.\n");
+            fprintf(stderr, "ERROR: AccessCache) const int* Cacheway is wrong.\n");
             exit(EXIT_FAILURE);
     }
 
@@ -957,12 +957,12 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
     if (MemRead) {  // lw
         counting.Memcount++;
         uint32_t CacheRead;
-        for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {
+        for (Cache->way = 0; Cache->way < *Cacheway; Cache->way++) {
             if (Cache[Cache->way].Cache[Cache->index][0][0] == 1) {  // $line is valid
                 if (Cache[Cache->way].Cache[Cache->index][1][0] == Cache->tag) {  // Cache HIT
                     counting.cacheHITcount++;
                     debugmem[1].CacheHIT = 1;
-                    UpdateLRU(Cache->way, Cacheset);
+                    UpdateLRU(Cache->way, Cacheway);
                     CacheRead = Cache[Cache->way].Cache[Cache->index][2][Cache->offset] << 24;
                     CacheRead = CacheRead | (Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] << 16);
                     CacheRead = CacheRead | (Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] << 8);
@@ -977,19 +977,19 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
         // Cache MISS
         counting.cycle += 1000;
         debugmem[1].CacheHIT = 0;
-        if (invalidCount == *Cacheset) {  // $lines of all set indexes are invalid, Cache cold MISS
+        if (invalidCount == *Cacheway) {  // $lines of all set indexes are invalid, Cache cold MISS
             counting.coldMISScount++;
             debugmem[1].ColdorConflictMISS = 0;
             CacheRead = DataMem(Addr, Writedata, MemRead, MemWrite);
-            UpdateCache(Addr, Cacheset, Cachesize);
-            UpdateLRU(Cache->way, Cacheset);
+            UpdateCache(Addr, Cacheway, Cachesize);
+            UpdateLRU(Cache->way, Cacheway);
             return CacheRead;
-        } else if (Cache->way == *Cacheset) {  // Cache conflict MISS
+        } else if (Cache->way == *Cacheway) {  // Cache conflict MISS
             counting.conflictMISScount++;
             debugmem[1].ColdorConflictMISS = 1;
             CacheRead = DataMem(Addr, Writedata, MemRead, MemWrite);
-            UpdateCache(Addr, Cacheset, Cachesize);
-            UpdateLRU(Cache->way, Cacheset);
+            UpdateCache(Addr, Cacheway, Cachesize);
+            UpdateLRU(Cache->way, Cacheway);
             return CacheRead;
         }
     } else if (MemWrite) {  // sw
@@ -998,13 +998,13 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
             case 1 :
                 // Write-through policy
                 // No write allocate
-                for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {
+                for (Cache->way = 0; Cache->way < *Cacheway; Cache->way++) {
                     if (Cache[Cache->way].Cache[Cache->index][0][0] == 1) {  // $line is valid
                         if (Cache[Cache->way].Cache[Cache->index][1][0] == Cache->tag) {  // Cache HIT
                             counting.cycle += 1000;
                             counting.cacheHITcount++;
                             debugmem[1].CacheHIT = 1;
-                            UpdateLRU(Cache->way, Cacheset);
+                            UpdateLRU(Cache->way, Cacheway);
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 2] = (Writedata & 0x0000ff00) >> 8;
@@ -1019,10 +1019,10 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                 // Cache MISS
                 counting.cycle += 1000;
                 debugmem[1].CacheHIT = 0;
-                if (invalidCount == *Cacheset) {  // $lines of all set indexes are invalid, Cache cold MISS
+                if (invalidCount == *Cacheway) {  // $lines of all set indexes are invalid, Cache cold MISS
                     counting.coldMISScount++;
                     debugmem[1].ColdorConflictMISS = 0;
-                } else if (Cache->way == *Cacheset) {  // Cache conflict MISS
+                } else if (Cache->way == *Cacheway) {  // Cache conflict MISS
                     counting.conflictMISScount++;
                     debugmem[1].ColdorConflictMISS = 1;
                 }
@@ -1031,12 +1031,12 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
             case 2 :
                 // Write-back policy
                 // Write allocate
-                for (Cache->way = 0; Cache->way < *Cacheset; Cache->way++) {
+                for (Cache->way = 0; Cache->way < *Cacheway; Cache->way++) {
                     if (Cache[Cache->way].Cache[Cache->index][0][0] == 1) {  // $line is valid
                         if (Cache[Cache->way].Cache[Cache->index][1][0] == Cache->tag) {  // Cache HIT
                             counting.cacheHITcount++;
                             debugmem[1].CacheHIT = 1;
-                            UpdateLRU(Cache->way, Cacheset);
+                            UpdateLRU(Cache->way, Cacheway);
                             Cache[Cache->way].Cache[Cache->index][4][0] = 1;  // Set dirty bit to 1
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                             Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
@@ -1052,17 +1052,17 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
                 // Cache MISS
                 counting.cycle += 1000;
                 debugmem[1].CacheHIT = 0;
-                if (invalidCount == *Cacheset) {  // $lines of all set indexes are invalid, Cache cold MISS
+                if (invalidCount == *Cacheway) {  // $lines of all set indexes are invalid, Cache cold MISS
                     counting.coldMISScount++;
                     debugmem[1].ColdorConflictMISS = 0;
-                } else if (Cache->way == *Cacheset) {  // Cache conflict MISS
+                } else if (Cache->way == *Cacheway) {  // Cache conflict MISS
                     counting.conflictMISScount++;
                     debugmem[1].ColdorConflictMISS = 1;
                 }
 
                 // Allocate cache
-                UpdateCache(Addr, Cacheset, Cachesize);
-                UpdateLRU(Cache->way, Cacheset);
+                UpdateCache(Addr, Cacheway, Cachesize);
+                UpdateLRU(Cache->way, Cacheway);
                 Cache[Cache->way].Cache[Cache->index][4][0] = 1;  // Set dirty bit to 1
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset] = (Writedata & 0xff000000) >> 24;
                 Cache[Cache->way].Cache[Cache->index][2][Cache->offset + 1] = (Writedata & 0x00ff0000) >> 16;
@@ -1078,12 +1078,12 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, con
         return 0;
     }
 }
-void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
+void UpdateCache(uint32_t Addr, const int* Cacheway, const int* Cachesize) {
     int way;
     debugmem[1].replaceCache = 0;
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     debugmem[1].CachenowAddr = memCacheIndex;
-    for (way = 0; way < *Cacheset; way++) {  // Find all $set
+    for (way = 0; way < *Cacheway; way++) {  // Find all $set
         if (Cache[way].Cache[Cache->index][0][0] == 0) {  // $line is invalid
             Cache[way].Cache[Cache->index][0][0] = 1;  // Set $line to valid
             Cache[way].Cache[Cache->index][1][0] = Cache->tag;
@@ -1098,20 +1098,20 @@ void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
             return;
         }
     }
-    if (way == *Cacheset) {  // All $lines are valid (= have to replace least recently used one)
+    if (way == *Cacheway) {  // All $lines are valid (= have to replace least recently used one)
         debugmem[1].replaceCache = 1;
-        ReplaceCache(Addr, Cacheset, Cachesize);
+        ReplaceCache(Addr, Cacheway, Cachesize);
     }
     return;
 }
-void UpdateLRU(uint8_t hitway, const int* Cacheset) {
+void UpdateLRU(uint8_t hitway, const int* Cacheway) {
     int way;
-    switch (*Cacheset) {
+    switch (*Cacheway) {
         case 1 :  // Direct-mapped
             break;
 
         case 2 :  // 2-way
-            for (way = 0; way < *Cacheset; way++) {  // Find all $set
+            for (way = 0; way < *Cacheway; way++) {  // Find all $set
                 // Saving value to shift array
                 Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x2) >> 1;
                 // Shifting right
@@ -1127,7 +1127,7 @@ void UpdateLRU(uint8_t hitway, const int* Cacheset) {
             break;
 
         case 4 :  // 4-way
-            for (way = 0; way < *Cacheset; way++) {  // Find all $set
+            for (way = 0; way < *Cacheway; way++) {  // Find all $set
                 // Saving value to shift array
                 Cache[way].Shiftreg[2] = (Cache[way].Cache[Cache->index][3][0] & 0x4) >> 2;
                 Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x2) >> 1;
@@ -1145,18 +1145,18 @@ void UpdateLRU(uint8_t hitway, const int* Cacheset) {
             break;
 
         default :
-            fprintf(stderr, "ERROR: UpdateLRU) const int* Cacheset is wrong.\n");
+            fprintf(stderr, "ERROR: UpdateLRU) const int* Cacheway is wrong.\n");
             exit(EXIT_FAILURE);
     }
     return;
 }
-void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
+void ReplaceCache(uint32_t Addr, const int* Cacheway, const int* Cachesize) {
     debugmem[1].dirtyline = 0;
-    int compare[*Cacheset];
+    int compare[*Cacheway];
     int LRU = 0;
     uint32_t memCacheIndex = Addr & 0xffffffc0;
     // Saving value to shift array & compare array
-    for (int way = 0; way < *Cacheset; way++) {
+    for (int way = 0; way < *Cacheway; way++) {
         Cache[way].Shiftreg[2] = (Cache[way].Cache[Cache->index][3][0] & 0x4) >> 2;
         Cache[way].Shiftreg[1] = (Cache[way].Cache[Cache->index][3][0] & 0x2) >> 1;
         Cache[way].Shiftreg[0] = (Cache[way].Cache[Cache->index][3][0] & 0x1);
@@ -1164,7 +1164,7 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
                               + Cache[way].Shiftreg[0];
     }
     // Compare shift register value (= Find least recently used set)
-    for (int way = 1; way < *Cacheset; way++) {
+    for (int way = 1; way < *Cacheway; way++) {
         if (compare[way] < compare[LRU]) {
             LRU = way;
         }
@@ -1177,7 +1177,7 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
         uint32_t memAddr;
 
         // Make old data's memory address
-        switch (*Cacheset) {
+        switch (*Cacheway) {
             case 1 :  // Direct-mapped
                 if (*Cachesize == 256) {  // 256 bytes, 4 $line per way
                     memAddr = Cache[LRU].Cache[Cache->index][1][0] << 8;
@@ -1218,7 +1218,7 @@ void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize) {
                 break;
 
             default :
-                fprintf(stderr, "ERROR: ReplaceCache) const int* Cacheset is wrong.\n");
+                fprintf(stderr, "ERROR: ReplaceCache) const int* Cacheway is wrong.\n");
                 exit(EXIT_FAILURE);
         }
         debugmem[1].CacheoldAddr = memAddr;

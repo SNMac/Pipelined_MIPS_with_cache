@@ -170,11 +170,11 @@ void BTFNTUpdateBranchBuffer(bool Branch, bool PCBranch, uint32_t BranchAddr);  
 void BTFNTBranchBufferWrite(uint32_t WritePC, uint32_t Address);  // Write BranchAddr to BTB
 
 /* Cache memory */
-uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheset, const int* Cachesize,
+uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheway, const int* Cachesize,
                      const int* Cachewrite, bool MemRead, bool MemWrite);  // Accessing cache
-void UpdateCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);  // Updating cache
-void UpdateLRU(uint8_t hitway, const int* Cacheset);  // Update shift register
-void ReplaceCache(uint32_t Addr, const int* Cacheset, const int* Cachesize);  // Check shift register
+void UpdateCache(uint32_t Addr, const int* Cacheway, const int* Cachesize);  // Updating cache
+void UpdateLRU(uint8_t hitway, const int* Cacheway);  // Update shift register
+void ReplaceCache(uint32_t Addr, const int* Cacheway, const int* Cachesize);  // Check shift register
 
 uint32_t ALU(uint32_t input1, uint32_t input2, char ALUSig);  // ALU
 uint32_t MUX(uint32_t input1, uint32_t input2, bool signal);  // signal == 0) input1, 1) input2
