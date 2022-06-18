@@ -382,7 +382,7 @@ void CacheSetting(const int* Cacheway, const int* Cachesize) {
     }
 }
 
-// Free malloc cache
+// Free calloc cache
 void FreeCache(const int* Cacheway, const int* Cachesize) {
     for (int way = 0; way < *Cacheway; way++) {
         for (int i = 0; i < (*Cachesize / *Cacheway / CACHELINESIZE); i++) {

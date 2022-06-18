@@ -977,21 +977,17 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheway, con
         // Cache MISS
         counting.cycle += 1000;
         debugmem[1].CacheHIT = 0;
-        if (invalidCount == *Cacheway) {  // $lines of all set indexes are invalid, Cache cold MISS
+        if (invalidCount != 0) {  // First time Addr access, Cache cold MISS
             counting.coldMISScount++;
             debugmem[1].ColdorConflictMISS = 0;
-            CacheRead = DataMem(Addr, Writedata, MemRead, MemWrite);
-            UpdateCache(Addr, Cacheway, Cachesize);
-            UpdateLRU(Cache->way, Cacheway);
-            return CacheRead;
         } else if (Cache->way == *Cacheway) {  // Cache conflict MISS
             counting.conflictMISScount++;
             debugmem[1].ColdorConflictMISS = 1;
-            CacheRead = DataMem(Addr, Writedata, MemRead, MemWrite);
-            UpdateCache(Addr, Cacheway, Cachesize);
-            UpdateLRU(Cache->way, Cacheway);
-            return CacheRead;
         }
+        CacheRead = DataMem(Addr, Writedata, MemRead, MemWrite);
+        UpdateCache(Addr, Cacheway, Cachesize);
+        UpdateLRU(Cache->way, Cacheway);
+        return CacheRead;
     } else if (MemWrite) {  // sw
         counting.Memcount++;
         switch (*Cachewrite) {
@@ -1019,7 +1015,7 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheway, con
                 // Cache MISS
                 counting.cycle += 1000;
                 debugmem[1].CacheHIT = 0;
-                if (invalidCount == *Cacheway) {  // $lines of all set indexes are invalid, Cache cold MISS
+                if (invalidCount != 0) {  // First time Addr access, Cache cold MISS
                     counting.coldMISScount++;
                     debugmem[1].ColdorConflictMISS = 0;
                 } else if (Cache->way == *Cacheway) {  // Cache conflict MISS
@@ -1052,7 +1048,7 @@ uint32_t AccessCache(uint32_t Addr, uint32_t Writedata, const int* Cacheway, con
                 // Cache MISS
                 counting.cycle += 1000;
                 debugmem[1].CacheHIT = 0;
-                if (invalidCount == *Cacheway) {  // $lines of all set indexes are invalid, Cache cold MISS
+                if (invalidCount != 0) {  // First time Addr access, Cache cold MISS
                     counting.coldMISScount++;
                     debugmem[1].ColdorConflictMISS = 0;
                 } else if (Cache->way == *Cacheway) {  // Cache conflict MISS
