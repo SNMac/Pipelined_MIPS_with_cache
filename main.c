@@ -967,7 +967,7 @@ void printFinalresult(const char* Predictor, const int* Predictbit, const char* 
             printf("Cache size : 1024 bytes\n");
             break;
     }
-    printf("$line per set : %d\n", *Cachesize / *Cacheway / CACHELINESIZE);
+    printf("# of sets : %d\n", *Cachesize / *Cacheway / CACHELINESIZE);
     switch (*Cachewrite) {
         case 1 :
             printf("Cache write policy : Write-through\n");
