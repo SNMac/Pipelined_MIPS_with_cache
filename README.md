@@ -2,9 +2,9 @@
 Pipelined MIPS processor with cache implemented in C
 
 Multi-Cycle Pipelined MIPS에서 캐시 메모리를 추가로 구현한 코드로, 동일한 명령어와 파이프라인을 지원한다.
-
+<br>
 ***
-
+<br>
 ## 메모리 계층 구조
 컴퓨팅의 초창기부터 프로그래머들은 무제한의 크기를 갖는 매우 빠른 메모리를 원해왔다.<br>
 비록 이를 만드는 것은 불가능하지만, 프로그래머들에게 무제한의 빠른 메모리를 갖고있는 듯한 환상을 만들어 주는 것은 가능하다.<br>
@@ -36,9 +36,9 @@ Multi-Cycle Pipelined MIPS에서 캐시 메모리를 추가로 구현한 코드�
 <center><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/hierarchy.png?raw=true" width="50%"></center>
 지역성의 원칙을 활용하기 위해서 컴퓨터의 메모리는 계층구조를 이루는 방식으로 구현되어 있다. 메모리 계층구조는 서로 다른 속도와 크기를 갖는 여러 계층의 메모리로 구성되어 있다.<br>
 가장 빠른 메모리는 더 느린 메모리보다 가격이 매우 비싸기 때문에 보통 그 크기가 작다.<br>
-
+<br>
 ***
-
+<br>
 ## 캐시
 <center><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/m1%20die%20shot.png?raw=true" width="50%"></center>
 위 사진은 Apple Silicon의 M1 프로세서의 die photography이다.<br>
@@ -50,9 +50,9 @@ Cache MISS가 발생하면 요구하는 데이터를 포함하는 line을 찾기
 
 캐시의 성능을 평가하는 척도로 ‘캐시 적중률’을 사용한다. 캐시 적중률이 충분히 크다면 프로세서의 메모리 계층 접근 속도는 최상위 계층의 캐시와 비슷하게 되고, 메모리의 크기는 최하위 계층의 크기와 같아지므로 프로그래머에게 무제한의 빠른 메모리를 갖고 있는 듯한 환상을 보여줄 수 있게 된다.<br>
 여기서 캐시는 하위 계층 메모리(메인 메모리)에 비해 크기가 작기 때문에 하위 계층의 모든 데이터를 캐시에 저장하여 캐시 적중률을 높일 수는 없다. 따라서 캐시에 데이터를 배치하는 방법을 정해두는 것이 필요하다.<br>
-
+<br>
 ***
-
+<br>
 ## 캐시 배치 정책
 캐시를 구성하는 방식에 따라 캐시 메모리가 데이터를 저장하고 검색하는 방법, 장소가 결정된다. 캐시의 전반적인 성능은 보통 캐시 메모리의 논리적 구성의 영향을 많이 받게 된다.<br>
 캐시 구성 방식으로는 크게 Direct Mapped Cache, Fully Associative Cache, Set Associative Cache의 3가지가 존재한다.<br>
@@ -90,9 +90,9 @@ Fully-Associative Cache는 Direct-Mapped Cache와는 정반대로 각 메모리�
 Set-Associative Cache는 Direct-Mapped Cache와 Fully-Associative Cache를 적절히 혼합한 형태를 갖고 있다. Fully-Associative Cache처럼 아무 way에 메인 메모리의 데이터가 저장될 수 있고, Direct-Mapped Cache처럼 Index비트를 사용하여 way 내부에서 데이터가 저장될 Cache Line의 위치를 정한다.<br>
 Set-Associative Cache의 way가 1개이면 Direct-Mapped Cache와 같고, way의 개수가 총 Cache Line의 개수와 같다면(각 way당 Cache Line의 개수가 1개라면) Fully-Associative Cache와 같다.<br>
 캐시에서 데이터를 찾을 때 모든 way를 찾아야 하므로 속도는 Direct-Mapped Cache보다 느리지만, Index비트를 사용하므로 모든 Cache Line을 찾을 필요가 없어져 Fully-Associative Cache보다 더 빠른 속도와 낮은 전력을 소모하는 중간적인 특징을 갖고 있다. 이러한 특징 때문에 현대 CPU에서 통상적으로 사용하는 방식이다.<br>
-
+<br>
 ***
-
+<br>
 ## 캐시 교체 정책
 Cache Line을 교체할 때 어떤 데이터를 버릴 것인지 정하는 것을 캐시 교체 정책이라 한다. 교체 정책에 따라 캐시가 더 효율적이게 사용될 수도 있고, 오히려 비효율적이게 사용될 수도 있다.<br>
 Direct-Mapped Cache에선 Cache Line마다 저장할 수 있는 메인 메모리의 주소가 정해져 있으므로 사용하지 않는다.<br>
@@ -101,9 +101,9 @@ Direct-Mapped Cache에선 Cache Line마다 저장할 수 있는 메인 메모리
 - LFU (Least Frequently Used) : 가장 적게 사용한 Cache Line을 교체하는 정책이다. 하지만 최근에 메인 메모리에서 가져온 데이터가 삭제될 수도 있고, 프로그램 실행 초반에만 자주 쓰인 데이터가 마지막까지 잔존해 있을 수도 있다.
 - FIFO (First In First Out) : 가장 오래된 Cache Line을 교체하는 정책이다. 이해하기 쉽고 구현이 간단하지만, 잦은 교체로 인해 실행속도를 떨어뜨릴 수 있다.
 - Random : Cache Line을 무작위로 하나 선택하여 교체한다. 다른 교체 정책과 달리 과거 이력을 저장할 추가적인 유닛이 필요하지 않아 구조가 간단하다는 장점이 있다.
-
+<br>
 ***
-
+<br>
 ## 캐시 쓰기 정책
 지금까지는 프로세서가 메모리로부터 값을 읽어오는 상황만을 생각하였지만, sw 명령어와 같이 프로세서가 메모리에 값을 쓰는 상황도 분명 존재한다. 이 때 캐시에서 쓰기를 처리하는 정책으로는 Write-through, Write-back이 있다.
 
@@ -123,9 +123,9 @@ Write-back 정책은 Write-through 정책의 대안으로, 프로세서가 메�
 만약 프로세서가 값을 캐시에 작성하려고 하는데, 캐시에 해당 Cache Line이 이미 교체되어 Cache MISS가 발생한 경우에는 어떻게 해야 할까?<br>
 이 경우, 메인 메모리로부터 해당 line을 캐시로 가져와 값을 작성하는 Write allocate 방법과 메인 메모리에 해당 line만 수정하고 캐시에는 가져오지 않는 No write allocate 방법이 있다.<br>
 Write-through 정책은 캐시와 메인 메모리 모두 값을 작성하므로 보통 No write allocate를 사용하고, Write-back 정책은 캐시에만 값을 작성하므로 보통 Write allocate 방법을 사용한다.<br>
-
+<br>
 ***
-
+<br>
 ## 구현
 이 프로그램에서 구현한 캐시에서 캐시라인의 크기는 64bytes로 고정되어 있고, 캐시 메모리의 크기는 256, 512, 1024bytes 중 선택할 수 있다.<br>
 Set-Associativity는 Direct-Mapped, 2-way, 4-way를 지원하고, 캐시 쓰기 정책은 Write-through, Write-back을 지원한다.<br>
