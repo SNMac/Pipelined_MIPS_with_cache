@@ -121,13 +121,13 @@ Direct-Mapped Cache에선 Cache Line마다 저장할 수 있는 메인 메모리
 
 
 ### Write-through
-<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/Write-through.png?raw=true" width="50%"></p>
+<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/Write-through.png?raw=true" width="20%"></p>
 Write-through 정책은 프로세서가 메모리에 값을 작성할 때, 캐시와 메인 메모리 모두 값을 작성하는 방법이다.<br>
 이 정책은 구조가 단순하여 구현이 쉽다는 장점이 있지만, 모든 쓰기 명령어에 대해 메인 메모리에 접근해야 한다는 단점이 있다. 메인 메모리에 접근하는 것은 캐시에 접근하는 것보다 훨씬 많은 Clock Cycle을 소모하므로, 결국 Write-through 정책에서 메모리에 값을 작성하는 일이 많아질수록 심한 성능 저하를 야기하게 된다.<br>
 
 
 ### Write-back
-<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/Write-back.png?raw=true" width="50%"></p>
+<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/Write-back.png?raw=true" width="20%"></p>
 Write-back 정책은 Write-through 정책의 대안으로, 프로세서가 메모리에 값을 작성할 때 캐시에만 값을 작성하고 메인 메모리엔 작성하지 않다가, 값이 수정된 Cache Line이 캐시 교체 정책에 의해 캐시에서 쫓겨날 때 메인 메모리에 해당 Cache line을 작성하는 정책이다.<br>
 이 정책은 Write- through보다 높은 성능을 보여주지만, 구현하기가 더 어렵다.<br>
 
@@ -143,7 +143,7 @@ Write-through 정책은 캐시와 메인 메모리 모두 값을 작성하므로
 ## 구현
 이 프로그램에서 구현한 캐시에서 캐시라인의 크기는 64bytes로 고정되어 있고, 캐시 메모리의 크기는 256, 512, 1024bytes 중 선택할 수 있다.<br>
 Set-Associativity는 Direct-Mapped, 2-way, 4-way를 지원하고, 캐시 쓰기 정책은 Write-through, Write-back을 지원한다.<br>
-캐시 교체 정책은 Least Recently Used(LRU)로 구현했으며, 구현 방식은 다음과 같다.<br>
+캐시 교체 정책은 Least Recently Used(LRU)로 구현했으며, 하드웨어 측면에서 구현하는 것을 고민한 결과 다음과 같은 방식이 떠오르게 됐다.<br>
 
 <p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%20shift%20register.png?raw=true" width="50%"></p>
 LRU를 구현하기 위해 모든 way의 Index마다 위 사진처럼 shift register 역할을 하는 값을 할당하였다.<br>
@@ -152,20 +152,21 @@ LRU를 구현하기 위해 모든 way의 Index마다 위 사진처럼 shift regi
 Input값은 제일 왼쪽부터 저장된다. 따라서 shift register의 모든 Index를 더한 값이 클수록 가장 최근에 사용한 way이고 작을수록 가장 오래 전에 사용한 way를 의미한다.<br>
 프로그램에서 사용자가 선택할 수 있는 최대의 set이 4-way이기 때문에 shift register의 사이즈는 3으로 고정하였다. 이 값에 대한 예시로 4-way Set-Associative Cache에서 0번째 way의 3번 Index가 참조된 상황을 가정해보자.<br>
 
-<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%201st.png?raw=true" width="50%"></p>
-0번째 way의 3번 Index가 참조되었으므로 0번째 way의 3번 shift register[2]를 1로, 나머지 way들 의 shift register[2]는 0으로 저장한다.<br>
+<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%201st.png?raw=true" width="70%"></p>
+0번째 way의 3번 Index가 참조되었으므로 0번째 way의 3번 shift register[2]를 1로, 나머지 way들의 shift register[2]는 0으로 저장한다.<br>
 이 다음으로 3번째 way의 3번 Index가 참조되었다고 생각 해보자.<br>
 
-<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%202nd.png?raw=true" width="50%"></p>
+<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%202nd.png?raw=true" width="70%"></p>
 shift register의 값을 변경하기 전 오른쪽으로 한칸씩 값을 이동시킨다.<br>
 3번째 way의 3번 Index가 참조되었으므로 3번째 way의 3번 shift register[2]를 1로, 나머지 way들의 shift register[2]는 0으로 저장한다.<br>
 이 다음으로 2번째 way의 3번 Index가 참조되었다고 가정해보자.<br>
 
-<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%203rd.png?raw=true" width="50%"></p>
+<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%203rd.png?raw=true" width="70%"></p>
 이전과 동일하게 오른쪽으로 한칸씩 값을 이동한 후, 2번째 way에 3번 shift register[2]에는 1을, 나머지 way에는 0을 저장한다.<br>
 이 다음으로 3번 Cache Line들 중 하나를 교체해야 하는 상황이 일어났다고 가정해보자.<br>
 
-<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%204th.png?raw=true" width="50%"></p>
+<p align="center"><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%204th.png?raw=true" width="70%"></p>
 3번 shift register의 값들 중 가장 작은 값이 1번째 way이므로 1번째 way의 3번 Cache Line이 새로운 데이터로 교체된다.<br>
 
-LRU의 구현 방식을 제외한 
+위 방법이 실제로 적용가능한지와, 모든 상황에서 의도한대로 작동하는지는 알 수 없으나, 최대한 하드웨어 측면에서 고민해본 결과 shift register를 도입하는 것이 제일 실현가능하다 판단되어 이대로 구현하게 되었다.<br>
+나머지 배치 정책과 쓰기 정책은 위에서 설명한 것을 토대로 구현하였다.<br>
