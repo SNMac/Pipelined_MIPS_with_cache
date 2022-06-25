@@ -140,7 +140,7 @@ Write-through 정책은 캐시와 메인 메모리 모두 값을 작성하므로
 ***
 <br>
 
-## 구현
+# 구현
 이 프로그램에서 구현한 캐시에서 캐시라인의 크기는 64bytes로 고정되어 있고, 캐시 메모리의 크기는 256, 512, 1024bytes 중 선택할 수 있다.<br>
 Set-Associativity는 Direct-Mapped, 2-way, 4-way를 지원하고, 캐시 쓰기 정책은 Write-through, Write-back을 지원한다.<br>
 캐시 교체 정책은 Least Recently Used(LRU)로 구현했으며, 하드웨어 측면에서 구현하는 것을 고민한 결과 다음과 같은 방식이 떠오르게 됐다.<br>
