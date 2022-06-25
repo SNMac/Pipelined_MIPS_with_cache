@@ -23,21 +23,21 @@ Multi-Cycle Pipelined MIPS에서 캐시 메모리를 추가로 구현한 코드�
 - 공간적 지역성 : 어떤 항목이 참조되면, 그 근처에 있는 다른 항목들이 곧바로 참조될 가능성이 높다. 위 예시에서 핸드폰을 사용하기 위해 가방에서 핸드폰을 꺼냈다면, 핸드폰과 같이 넣어 놓았던 블루투스 이어폰, 보조배터리의 존재도 알게 될 것이고, 이 물건들 또한 핸드폰과 더불어 유용하게 사용될 것이다. 핸드폰과 관련된 것들은 공간적 지역성을 높이기 위해 가방에서 같은 공간에 함께 정리되어 있다.
 
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/block.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/block.png?raw=true" width="50%">
 공간적 지역성을 최대한 활용하기 위하여 메모리 계층 간에 데이터를 복사할 때는 해당 데이터 하나만 복사하는 것이 아닌, 위 사진처럼 두 계층 간 데이터의 최소 단위인 line 전체를 복사하게 된다.
 
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/locality.jpg?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/locality.jpg?raw=true" width="50%">
 위 사진은 프로세스 실행 중 접근한 데이터의 접근 시점과 메모리 주소를 표현한 것으로, 시간적 지역성과 공간적 지역성을 잘 보여준다. 사진에서 가로 축은 실행 시간, 세로 축은 메모리 주소이다.<br>
 수평으로 이어진 참조 기록은 긴 시간에 걸쳐 같은 메모리 주소를 참조한 것이고, 수직으로 이어진 참조 기록은 같은 시간에 밀접한 메모리 주소를 참조한 것이다.<br>
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/hierarchy.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/hierarchy.png?raw=true" width="50%">
 지역성의 원칙을 활용하기 위해서 컴퓨터의 메모리는 계층구조를 이루는 방식으로 구현되어 있다. 메모리 계층구조는 서로 다른 속도와 크기를 갖는 여러 계층의 메모리로 구성되어 있다.<br>
 가장 빠른 메모리는 더 느린 메모리보다 가격이 매우 비싸기 때문에 보통 그 크기가 작다.<br>
 
 
 ## 캐시
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/m1%20die%20shot.png?raw=true" width="70%">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/m1%20die%20shot.png?raw=true" width="50%">
 위 사진은 Apple Silicon의 M1 프로세서의 die photography이다.<br>
 M1 프로세서의 L1 캐시는 각 CPU Core의 내부에 위치해 있고, PERF CPU Core의 주변에 12MB L2 캐시, EFF CPU Core 주변에 4MB L2 캐시, 프로세서 중앙에 8MB System Level Cache, 즉 L3 캐시가 존재한다.<br>
 이러한 캐시들은 SRAM으로 구성된 메모리로써 메모리 계층 구조에서 프로세서에 가장 가까이 위치한, 속도가 매우 빠른 메모리이다.<br>
@@ -55,7 +55,7 @@ Cache MISS가 발생하면 요구하는 데이터를 포함하는 line을 찾기
 캐시 구성 방식을 알아보기 전에 먼저 캐시 메모리의 논리적 기본 단위를 알아보도록 하자.<br>
 
 ### 캐시 메모리의 기본 단위
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/cache%20address.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/cache%20address.png?raw=true" width="50%">
 위 사진은 32비트 주소체계를 가진 프로세서의 캐시 메모리이다.<br>
 캐시의 엔트리가 1024개 존재하므로 Index비트 또한 그에 맞게 10개의 비트가 필요하다.<br>
 Cache Line에서 offset비트가 2비트라 했을 때, 주소의 0~1번 비트가 Cache Line offset비트가 되고, 2~11번 비트가 Cache Line을 참조할 Index비트, 12~31번 비트가 캐시에 저장된 데이터의 주소를 식별할 Tag비트가 된다.<br>
@@ -81,7 +81,7 @@ Fully-Associative Cache는 Direct-Mapped Cache와는 정반대로 각 메모리�
 
 
 ### Set-Associative Cache
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/Set%20Associative%20Cache.jpg?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/Set%20Associative%20Cache.jpg?raw=true" width="50%">
 Set-Associative Cache는 Direct-Mapped Cache와 Fully-Associative Cache를 적절히 혼합한 형태를 갖고 있다. Fully-Associative Cache처럼 아무 way에 메인 메모리의 데이터가 저장될 수 있고, Direct Mapped Cache처럼 Index비트를 사용하여 way 내부에서 데이터가 저장될 Cache Line의 위치를 정한다.<br>
 Set-Associative Cache의 way가 1개이면 Direct Mapped Cache와 같고, way의 개수가 총 Cache Line의 개수와 같다면(각 way당 Cache Line의 개수가 1개라면) Fully-Associative Cache와 같다.<br>
 캐시에서 데이터를 찾을 때 모든 way를 찾아야 하므로 속도는 Direct-Mapped Cache보다 느리지만, Index비트를 사용하므로 모든 Cache Line을 찾을 필요가 없어져 Fully-Associative Cache보다 더 빠른 속도와 낮은 전력을 소모하는 중간적인 특징을 갖고 있다. 이러한 특징 때문에 현대 CPU에서 통상적으로 사용하는 방식이다.<br>
@@ -90,7 +90,7 @@ Set-Associative Cache의 way가 1개이면 Direct Mapped Cache와 같고, way의
 Set-Associativity는 Direct-Mapped, 2-way, 4-way를 지원하고, 캐시 쓰기 정책은 Write-through, Write-back을 지원한다.<br>
 캐시 교체 정책은 Least Recently Used(LRU)로 구현했으며, 구현 방식은 다음과 같다.<br>
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%20shift%20register.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%20shift%20register.png?raw=true" width="70%">
 
 LRU를 구현하기 위해 모든 way의 Index마다 위 사진처럼 shift register 역할을 하는 값을 할당하였다.<br>
 이 값은 제일 오른쪽 비트의 Index 가 0이고 제일 왼쪽 비트의 Index가 2인 총 크기 3의 shift register를 표현한다.<br>
@@ -98,23 +98,23 @@ LRU를 구현하기 위해 모든 way의 Index마다 위 사진처럼 shift regi
 Input값은 제일 왼쪽부터 저장된다. 따라서 shift register의 모든 Index를 더한 값이 클수록 가장 최근에 사용한 way이고 작을수록 가장 오래 전에 사용한 way를 의미한다.<br>
 프로그램에서 사용자가 선택할 수 있는 최대의 set이 4-way이기 때문에 shift register의 사이즈는 3으로 고정하였다. 이 값에 대한 예시로 4-way Set-Associative Cache에서 0번째 way의 3번 Index가 참조된 상황을 가정해보자.<br>
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%201st.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%201st.png?raw=true" width="70%">
 
 0번째 way의 3번 Index가 참조되었으므로 0번째 way의 3번 shift register[2]를 1로, 나머지 way들 의 shift register[2]는 0으로 저장한다.<br>
 이 다음으로 3번째 way의 3번 Index가 참조되었다고 생각 해보자.<br>
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%202nd.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%202nd.png?raw=true" width="70%">
 
 shift register의 값을 변경하기 전 오른쪽으로 한칸씩 값을 이동시킨다.<br>
 3번째 way의 3번 Index가 참조되었으므로 3번째 way의 3번 shift register[2]를 1로, 나머지 way들의 shift register[2]는 0으로 저장한다.<br>
 이 다음으로 2번째 way의 3번 Index가 참조되었다고 가정해보자.<br>
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%203rd.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%203rd.png?raw=true" width="70%">
 
 이전과 동일하게 오른쪽으로 한칸씩 값을 이동한 후, 2번째 way에 3번 shift register[2]에는 1을, 나머지 way에는 0을 저장한다.<br>
 이 다음으로 3번 Cache Line들 중 하나를 교체해야 하는 상황이 일어났다고 가정해보자.<br>
 
-<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%204th.png?raw=true">
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%204th.png?raw=true" width="70%">
 
 3번 shift register의 값들 중 가장 작은 값이 1번째 way이므로 1번째 way의 3번 Cache Line이 새로운 데이터로 교체된다.<br>
 
