@@ -3,8 +3,16 @@ Pipelined MIPS processor with cache implemented in C
 
 Multi-Cycle Pipelined MIPS에서 캐시 메모리를 추가로 구현한 코드로, 동일한 명령어와 파이프라인을 지원한다.
 
-캐시라인의 크기는 64bytes로 고정되어 있고, 캐시 메모리의 크기는 256, 512, 1024bytes 중 선택할 수 있다.
+<img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/m1%20die%20shot.png?raw=true">
+
+위 사진은 Apple Silicon의 M1 프로세서의 die photography이다.
+M1 프로세서의 L1 캐시는 각 CPU Core의 내부에 위치해 있고, PERF CPU Core의 주변에 12MB L2 캐시, EFF CPU Core 주변에 4MB L2 캐시, 프로세서 중앙에 8MB System Level Cache, 즉 L3 캐시가 존재한다.
+이러한 캐시들은 SRAM으로 구성된 메모리로써 메모리 계층 구조에서 프로세서에 가장 가까이 위치한, 속도가 매우 빠른 메모리이다.
+캐시는 지역성의 원칙을 활용하여 메인 메모리에 있는 데이터를 저장해 놓고, 프로세서가 데이터를 요구했을 때 캐시에서 먼저 찾도록 하여 시스템 성능을 향상시킨다.
+
+이 프로그램에서 구현한 캐시에서 캐시라인의 크기는 64bytes로 고정되어 있고, 캐시 메모리의 크기는 256, 512, 1024bytes 중 선택할 수 있다.
 Set-Associativity는 Direct-Mapped, 2-way, 4-way를 지원하고, 캐시 쓰기 정책은 Write-through, Write-back을 지원한다.
+
 캐시 교체 정책은 Least Recently Used(LRU)로 구현했으며, 구현 방식은 다음과 같다.
 
 <img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/LRU%20shift%20register.png?raw=true">
