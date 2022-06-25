@@ -5,6 +5,7 @@ Multi-Cycle Pipelined MIPS에서 캐시 메모리를 추가로 구현한 코드�
 <br>
 ***
 <br>
+
 ## 메모리 계층 구조
 컴퓨팅의 초창기부터 프로그래머들은 무제한의 크기를 갖는 매우 빠른 메모리를 원해왔다.<br>
 비록 이를 만드는 것은 불가능하지만, 프로그래머들에게 무제한의 빠른 메모리를 갖고있는 듯한 환상을 만들어 주는 것은 가능하다.<br>
@@ -39,6 +40,7 @@ Multi-Cycle Pipelined MIPS에서 캐시 메모리를 추가로 구현한 코드�
 <br>
 ***
 <br>
+
 ## 캐시
 <center><img src="https://github.com/SNMac/Pipelined_MIPS_with_cache/blob/master/m1%20die%20shot.png?raw=true" width="50%"></center>
 위 사진은 Apple Silicon의 M1 프로세서의 die photography이다.<br>
@@ -53,6 +55,7 @@ Cache MISS가 발생하면 요구하는 데이터를 포함하는 line을 찾기
 <br>
 ***
 <br>
+
 ## 캐시 배치 정책
 캐시를 구성하는 방식에 따라 캐시 메모리가 데이터를 저장하고 검색하는 방법, 장소가 결정된다. 캐시의 전반적인 성능은 보통 캐시 메모리의 논리적 구성의 영향을 많이 받게 된다.<br>
 캐시 구성 방식으로는 크게 Direct Mapped Cache, Fully Associative Cache, Set Associative Cache의 3가지가 존재한다.<br>
@@ -93,6 +96,7 @@ Set-Associative Cache의 way가 1개이면 Direct-Mapped Cache와 같고, way의
 <br>
 ***
 <br>
+
 ## 캐시 교체 정책
 Cache Line을 교체할 때 어떤 데이터를 버릴 것인지 정하는 것을 캐시 교체 정책이라 한다. 교체 정책에 따라 캐시가 더 효율적이게 사용될 수도 있고, 오히려 비효율적이게 사용될 수도 있다.<br>
 Direct-Mapped Cache에선 Cache Line마다 저장할 수 있는 메인 메모리의 주소가 정해져 있으므로 사용하지 않는다.<br>
@@ -104,6 +108,7 @@ Direct-Mapped Cache에선 Cache Line마다 저장할 수 있는 메인 메모리
 <br>
 ***
 <br>
+
 ## 캐시 쓰기 정책
 지금까지는 프로세서가 메모리로부터 값을 읽어오는 상황만을 생각하였지만, sw 명령어와 같이 프로세서가 메모리에 값을 쓰는 상황도 분명 존재한다. 이 때 캐시에서 쓰기를 처리하는 정책으로는 Write-through, Write-back이 있다.
 
@@ -126,6 +131,7 @@ Write-through 정책은 캐시와 메인 메모리 모두 값을 작성하므로
 <br>
 ***
 <br>
+
 ## 구현
 이 프로그램에서 구현한 캐시에서 캐시라인의 크기는 64bytes로 고정되어 있고, 캐시 메모리의 크기는 256, 512, 1024bytes 중 선택할 수 있다.<br>
 Set-Associativity는 Direct-Mapped, 2-way, 4-way를 지원하고, 캐시 쓰기 정책은 Write-through, Write-back을 지원한다.<br>
