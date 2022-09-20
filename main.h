@@ -18,8 +18,8 @@ typedef struct _COUNTING {
     int stall;
 }COUNTING;
 
-void FileSelect(char** name);
-void ReadDirectory(char** files, char** directory);
+void FileSelect(char** filename);
+void ReadDirectory(char** files, char* filepath);
 char PredSelect(void);
 int PBSelect(void);
 char CounterSelect(void);

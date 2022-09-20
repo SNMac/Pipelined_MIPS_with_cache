@@ -8,14 +8,13 @@
 #include <dirent.h>
 #include <limits.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "main.h"
 #include "Units.h"
 #include "Stages.h"
 #include "Debug.h"
 
-#define DIRECTORY "/testbin/"
-#define SAFE_FREE(p) {if(p!=NULL){free(p);p=NULL;}}
 COUNTING counting;  // for result counting
 
 uint32_t Memory[0x400000];
@@ -37,17 +36,13 @@ extern DEBUGEX debugex[2];
 extern DEBUGMEM debugmem[2];
 extern DEBUGWB debugwb[2];
 
-// This program reads *.bin files from testbin folder
-// It must be located in upper directory of executable file
-// for example)
-// Location of executable file : User/Project/
-// Location of testbin folder : User/
+// This program reads *.bin files from directory where excutable file exists
+// It must be located in same directory of executable file
 
-int main(int argc, char* argv[]) {
+int main() {
     while (1) {
         char* filename = malloc(sizeof(char) * PATH_MAX);
         memset(filename, 0, sizeof(&filename));
-        strcat(filename, argv[0]);
         char Predictor = '0';
         int PredictionBit = 0;
         char Counter = '0';
@@ -156,11 +151,12 @@ int main(int argc, char* argv[]) {
 }
 
 // Filename select
-void FileSelect(char** name) {
+void FileSelect(char** filename) {
     char* files[10];
     memset(files, 0, sizeof(files));
+    char filepath[PATH_MAX];
 
-    ReadDirectory(files, name);
+    ReadDirectory(files, filepath);
 
     int filenameSelector;
     while (1) {
@@ -172,54 +168,45 @@ void FileSelect(char** name) {
             printf("User inputted wrong number. Please try again.\n");
         }
         else {
-            strcat(*name, files[filenameSelector - 1]);
             printf("%s\n", files[filenameSelector - 1]);
+            strcat(*filename, files[filenameSelector - 1]);
             break;
         }
     }
 }
 
 // Read designated directory
-void ReadDirectory(char** files, char** directory) {
-    int index = 0;
-    int name_count;
-    char* ext;
-    struct dirent** name_list = NULL;
+void ReadDirectory(char** files, char* filepath) {
+    DIR *dir_info;
+    struct dirent *dir_entry;
 
-    char* upperdirect;
+    getcwd(filepath, PATH_MAX);
+    dir_info = opendir(filepath);
+
     printf("######################################################################\n");
 
-    // Cut last directory to get execution file's upper directory
-    upperdirect = strrchr(*directory, '/'); *upperdirect = '\0';
-    upperdirect = strrchr(*directory, '/'); *upperdirect = '\0';
-
-    strcat(*directory, DIRECTORY);  // access to testbin folder of upper directory
-    printf("Read *.bin file from designated directory : \n%s\n", *directory);
+    printf("Read *.bin file from designated directory : \n%s\n", filepath);
     printf("======================================================================\n");
 
-
-    name_count = scandir(*directory, &name_list, NULL, alphasort);  // Get files' name and sort them in alphabetical order
-    for (int i = 0; i < name_count; i++) {
-        ext = strchr(name_list[i]->d_name, '.');  // Get extension from file
-        if (ext == NULL) {
-            continue;
-        }
-        if (strcmp(ext, ".bin") == 0) {  // If file's name has .bin extension
-            if (index != 0 && index % 4 != 0) {
-                printf(", ");
-            }
-            files[index] = name_list[i]->d_name;  // Save it to array
-            printf("%d : %s", index + 1, files[index]);
-            index++;
-            if (index % 4 == 0) {
+    if (dir_info != NULL) {
+        int line = 0;
+        int filesSize = 0;
+        while (dir_entry = readdir(dir_info)) {
+            if (strstr(dir_entry->d_name, ".bin") == NULL)
+                continue;
+            files[filesSize++] = dir_entry->d_name;
+            printf("%d : %s", filesSize, dir_entry->d_name);
+            printf("          ");
+            if (++line > 2) {
                 printf("\n");
+                line = 0;
             }
         }
-        SAFE_FREE(name_list[i]);
+        closedir(dir_info);
     }
+
     printf("\n");
     printf("######################################################################\n");
-    SAFE_FREE(name_list);
 }
 
 // Predictor select
